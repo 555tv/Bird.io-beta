@@ -36,11 +36,22 @@
     gap:26px; padding:24px;
   }
   #selectScreen h1{
-    font-family:'Space Grotesk', sans-serif; font-weight:700; letter-spacing:0.05em;
-    font-size:clamp(30px,5.6vw,50px); color:var(--ink);
-    text-shadow:0 0 40px rgba(217,194,126,0.2);
+    font-family:'Space Grotesk', sans-serif; font-weight:700; letter-spacing:0.02em;
+    font-size:clamp(56px,13vw,150px); line-height:1; color:var(--ink);
+    text-shadow:0 0 60px rgba(217,194,126,0.35);
+    text-align:center;
   }
+  #selectScreen h1 .dots{color:var(--ink-dim);}
+  #selectScreen h1 .io{color:var(--gold);}
   #selectScreen .tagline{color:var(--ink-dim); font-size:14px; letter-spacing:0.03em; margin-top:-14px; text-align:center; max-width:480px;}
+  #betaTag{
+    margin-top:-18px; color:var(--ink-dim); font-family:'JetBrains Mono',monospace;
+    font-size:12px; letter-spacing:0.08em; text-transform:uppercase; opacity:0.7;
+  }
+  #deathScoreBox{
+    color:var(--gold); font-family:'Space Grotesk',sans-serif; font-weight:600;
+    font-size:16px; letter-spacing:0.02em; text-align:center;
+  }
 
   .chain{display:flex; align-items:center; gap:10px; margin:6px 0 4px; flex-wrap:wrap; justify-content:center;}
   .chain .step{display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 18px; border-radius:14px; background:var(--panel); border:1px solid var(--panel-border);}
@@ -64,6 +75,97 @@
   #startBtn:disabled{opacity:0.35; cursor:not-allowed; box-shadow:none;}
   #startBtn:not(:disabled):hover{transform:translateY(-2px);}
 
+  #discordBtn{
+    width:44px; height:44px; flex:0 0 auto; border-radius:10px;
+    background:var(--panel); border:1px solid var(--panel-border);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    transition:background .15s ease, transform .12s ease, border-color .15s ease;
+  }
+  #discordBtn svg{width:22px; height:22px; fill:var(--ink);}
+  #discordBtn:hover{background:#5865F2; border-color:#5865F2; transform:translateY(-2px);}
+
+  #updatesPanel{
+    position:absolute; top:24px; left:24px; width:230px; max-width:calc(50vw - 40px);
+    z-index:21; padding:14px 16px;
+  }
+  #updatesPanel h4{font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.08em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:10px;}
+  #updatesPanel .upd{margin-bottom:10px;}
+  #updatesPanel .upd:last-child{margin-bottom:0;}
+  #updatesPanel .upd .date{font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--gold); letter-spacing:0.03em;}
+  #updatesPanel .upd .text{font-size:12px; color:var(--ink); line-height:1.4; margin-top:2px;}
+
+  #topRightBtns{
+    position:absolute; top:24px; right:24px; z-index:21;
+    display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end;
+  }
+  #howToPlayBtn{
+    position:static;
+    padding:12px 18px; cursor:pointer; display:flex; align-items:center; gap:8px;
+    font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px;
+    transition:background .15s ease, transform .12s ease;
+  }
+  #howToPlayBtn:hover{background:rgba(217,194,126,0.14); border-color:var(--gold); transform:translateY(-2px);}
+  #howToPlayBtn .ico{font-size:16px;}
+
+  #supportBtn{
+    position:static; color:var(--ink); font-family:'Space Grotesk',sans-serif;
+    padding:12px 18px; cursor:pointer; display:flex; align-items:center; gap:8px;
+    font-weight:600; font-size:13px;
+    transition:background .15s ease, transform .12s ease, border-color .15s ease;
+  }
+  #supportBtn:hover{background:rgba(255,95,86,0.14); border-color:#FF5F56; transform:translateY(-2px);}
+  #supportBtn .ico{font-size:16px;}
+
+  #howToPlayModal{
+    position:absolute; inset:0; z-index:30; display:none;
+    align-items:center; justify-content:center;
+    background:rgba(6,10,7,0.72); backdrop-filter:blur(3px);
+    padding:24px;
+  }
+  #howToPlayModal.open{display:flex;}
+  #howToPlayModal .box{
+    position:relative; max-width:640px; width:100%; max-height:82vh; overflow-y:auto;
+    background:var(--panel); border:1px solid var(--panel-border); border-radius:16px;
+    padding:28px 26px; display:flex; flex-direction:column; gap:18px;
+    box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  }
+  #howToPlayModal .box::-webkit-scrollbar{width:6px;}
+  #howToPlayModal .box::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15); border-radius:3px;}
+  #howToPlayModal h2{font-family:'Space Grotesk',sans-serif; font-size:22px; letter-spacing:0.03em;}
+  #howToPlayModal .tagline{color:var(--ink-dim); font-size:14px; letter-spacing:0.02em;}
+  #closeHowToPlay{
+    position:absolute; top:16px; right:16px; width:32px; height:32px; border-radius:8px;
+    background:rgba(255,255,255,0.06); border:1px solid var(--panel-border); color:var(--ink);
+    font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  #closeHowToPlay:hover{background:rgba(255,255,255,0.14);}
+  #howToPlayModal .sectionLabel{font-family:'Space Grotesk',sans-serif; font-size:11px; letter-spacing:0.08em; color:var(--ink-dim); text-transform:uppercase; margin-bottom:8px;}
+  #howToPlayModal .chain, #howToPlayModal .legend{justify-content:flex-start;}
+
+  .birdCard{
+    display:flex; align-items:center; gap:12px; padding:10px 14px; border-radius:12px;
+    background:rgba(255,255,255,0.03); border:1px solid var(--panel-border); margin-bottom:8px;
+  }
+  .birdCard img{width:46px; height:46px; object-fit:contain; flex:0 0 auto; filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));}
+  .birdCard .info{flex:1; min-width:0;}
+  .birdCard .info .top{display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .birdCard .info b{font-family:'Space Grotesk',sans-serif; font-size:14px;}
+  .birdCard .info .hp{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-dim);}
+  .birdCard .info .need{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--gold);}
+  .birdCard .info .ability{font-size:11.5px; color:var(--ink-dim); margin-top:3px; line-height:1.35;}
+  .birdCard .info .ability b{color:var(--pigeon); font-size:11.5px;}
+
+  .seasonCard{
+    padding:12px 14px; border-radius:12px; background:rgba(255,255,255,0.03);
+    border:1px solid var(--panel-border); margin-bottom:8px; font-size:12.5px; line-height:1.5;
+  }
+  .seasonCard b{font-family:'Space Grotesk',sans-serif; font-size:13.5px;}
+  .seasonCard .dot{display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px;}
+
+  .preyRow{display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; background:rgba(255,255,255,0.03); margin-bottom:5px; font-size:12px;}
+  .preyRow img{width:26px; height:26px; object-fit:contain; flex:0 0 auto;}
+  .preyRow .pts{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--gold);}
+
   .legend{display:flex; gap:16px; flex-wrap:wrap; justify-content:center; font-size:12px; color:var(--ink-dim);}
   .legend .li{display:flex; align-items:center; gap:6px;}
   .legend .sw{width:10px; height:10px; border-radius:3px;}
@@ -85,6 +187,9 @@
   #flightBarOuter{margin-top:8px; height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden;}
   #flightBarInner{height:100%; width:100%; background:linear-gradient(90deg, #7FD1E0, #C9F0FF); transition:width .15s linear, background .2s ease;}
   #flightLabel{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:4px;}
+  #abilityBarOuter{margin-top:8px; height:6px; border-radius:4px; background:rgba(255,255,255,0.08); overflow:hidden;}
+  #abilityBarInner{height:100%; width:100%; background:linear-gradient(90deg, #B97A3D, #E8C27E); transition:width .15s linear, background .2s ease;}
+  #abilityLabel{font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink-dim); margin-top:4px;}
 
   #flyBtn{
     position:absolute; bottom:24px; right:24px; z-index:12; width:64px; height:64px; border-radius:50%;
@@ -111,6 +216,7 @@
     bottom:16px; left:16px; width:300px; max-width:calc(100vw - 32px);
     padding:10px 12px; display:flex; flex-direction:column; gap:8px;
     transition: top .18s ease, left .18s ease, bottom .18s ease, width .18s ease, transform .18s ease;
+    z-index:50;
   }
   #chatPanel.centered{
     top:50%; left:50%; bottom:auto; transform:translate(-50%,-50%);
@@ -150,6 +256,14 @@
     padding:8px 16px; border-radius:20px; transition:opacity 1s ease; text-align:center; max-width:80vw;
   }
 
+  #edibleToast{
+    position:absolute; bottom:80px; left:50%; transform:translateX(-50%);
+    font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink);
+    background:var(--panel); border:1px solid var(--panel-border); backdrop-filter:blur(10px);
+    padding:8px 16px; border-radius:20px; opacity:0; pointer-events:none; z-index:14;
+    transition:opacity .25s ease; letter-spacing:0.02em;
+  }
+
   #evoToast{
     position:absolute; top:38%; left:50%; transform:translate(-50%,-50%) scale(0.8);
     font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:38px; color:var(--gold);
@@ -180,16 +294,58 @@
 <div id="app">
 
   <div id="selectScreen">
-    <h1>PECKING ORDER</h1>
-    <div class="tagline">Один общий двор. Клюй зерно, расти и поднимайся по иерархии — от воробья до ворона.</div>
 
-    <div class="chain" id="chain"></div>
+    <div id="updatesPanel" class="panel">
+      <h4>Обновления</h4>
+      <div class="upd"><div class="date">28.08</div><div class="text">Добавлена кнопка Discord и новое меню</div></div>
+      <div class="upd"><div class="date">20.08</div><div class="text">Баланс полёта и способностей птиц</div></div>
+      <div class="upd"><div class="date">12.08</div><div class="text">Исправлены баги с чатом и лидербордом</div></div>
+    </div>
 
-    <div class="legend" id="legend"></div>
+    <div id="topRightBtns">
+      <button id="supportBtn" class="panel" title="Поддержать проект">
+        <span class="ico">☕</span><span>Support</span>
+      </button>
+      <div id="howToPlayBtn" class="panel">
+        <span class="ico">📖</span><span>Как играть</span>
+      </div>
+    </div>
+
+    <h1>Bird<span class="dots">.</span><span class="io">io</span></h1>
+    <div id="betaTag">beta version</div>
+
+    <div id="deathScoreBox" style="display:none;">Игра окончена — счёт: <span id="deathScoreVal">0</span></div>
 
     <div id="nameRow">
       <input id="nameInput" type="text" maxlength="14" placeholder="Твоё имя">
-      <button id="startBtn" disabled>На двор</button>
+      <button id="startBtn" disabled>Играть</button>
+      <button id="discordBtn" title="Наш Discord" aria-label="Discord">
+        <svg viewBox="0 0 245 240" xmlns="http://www.w3.org/2000/svg"><path d="M104.4 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.2-5 10.2-11.1.1-6.1-4.5-11.1-10.2-11.1zM140.9 103.9c-5.7 0-10.2 5-10.2 11.1s4.6 11.1 10.2 11.1c5.7 0 10.3-5 10.3-11.1s-4.6-11.1-10.3-11.1z"/><path d="M189.5 20h-134C44.1 20 35 29.1 35 40.4v135.9c0 11.3 9.1 20.4 20.5 20.4h113.4l-5.3-18.5 12.8 11.9 12.1 11.2 21.5 19V40.4c0-11.3-9.1-20.4-20.5-20.4zM155 158.5s-3.6-4.3-6.6-8.1c13.1-3.7 18.1-11.9 18.1-11.9-4.1 2.7-8 4.6-11.5 5.9-5 2.1-9.8 3.5-14.5 4.3-9.6 1.8-18.4 1.3-25.9-.1-5.7-1.1-10.6-2.7-14.7-4.3-2.3-.9-4.8-2-7.3-3.4-.3-.2-.6-.3-.9-.5-.2-.1-.3-.2-.4-.3-1.8-1-2.8-1.7-2.8-1.7s4.8 8 17.5 11.8c-3 3.8-6.7 8.3-6.7 8.3-22.1-.7-30.5-15.2-30.5-15.2 0-32.2 14.4-58.3 14.4-58.3 14.4-10.8 28.1-10.5 28.1-10.5l1 1.2c-18 5.2-26.3 13.1-26.3 13.1s2.2-1.2 5.9-2.9c10.7-4.7 19.2-6 22.7-6.3.6-.1 1.1-.2 1.7-.2 6.1-.8 13-1 20.2-.2 9.5 1.1 19.7 3.9 30.1 9.6 0 0-7.9-7.5-24.9-12.7l1.4-1.6s13.7-.3 28.1 10.5c0 0 14.4 26.1 14.4 58.3 0 0-8.5 14.5-30.6 15.2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div id="howToPlayModal">
+    <div class="box">
+      <button id="closeHowToPlay" aria-label="Закрыть">✕</button>
+      <h2>Как играть</h2>
+      <div class="tagline">Один общий двор. Клюй зерно, расти и поднимайся по иерархии — от воробья до феникса. Используй способность (ЛКМ) и полёт (кнопка/пробел), следи за сменой сезонов и дня/ночи.</div>
+
+      <div>
+        <div class="sectionLabel">Порядок эволюции и способности</div>
+        <div id="chain"></div>
+      </div>
+
+      <div>
+        <div class="sectionLabel">Сезоны и время суток</div>
+        <div id="seasons"></div>
+      </div>
+
+      <div>
+        <div class="sectionLabel">Кто кого может есть</div>
+        <div class="tagline" style="margin-top:0;">Каждый вид ест всё, что доступно видам ниже по иерархии, плюс свою собственную еду. Чем крупнее птица — тем больше типов добычи ей доступно.</div>
+        <div id="legend"></div>
+      </div>
     </div>
   </div>
 
@@ -203,15 +359,18 @@
     <div id="hpBarOuter"><div id="hpBarInner"></div></div>
     <div id="hpLabel">100 / 100 HP</div>
     <div id="evoBarOuter"><div id="evoBarInner"></div></div>
-    <div id="evoLabel">до эволюции: 0 / 25</div>
+    <div id="evoLabel">xp: 0 / 25</div>
     <div id="flightBarOuter"><div id="flightBarInner"></div></div>
     <div id="flightLabel">Пробел — взлёт</div>
+    <div id="abilityBarOuter" style="display:none;"><div id="abilityBarInner"></div></div>
+    <div id="abilityLabel" style="display:none;"></div>
   </div>
 
   <div class="panel" id="hudSeason" style="display:none;">
     <div class="seasonName" id="seasonName">Лето</div>
     <div id="seasonBarOuter"><div id="seasonBarInner"></div></div>
     <div class="seasonTime" id="seasonTime">до Зимы: 3:00</div>
+    <div class="seasonTime" id="dayNightTime">☀ День · 0:00</div>
   </div>
 
   <div class="panel" id="leaderboard" style="display:none;">
@@ -231,6 +390,7 @@
   <div id="hint" style="display:none;">Мышь — движение · Клюв бьёт при контакте с другой птицей · У каждого вида свой рацион — смотри легенду на экране выбора · Мышь, хомяк и кот убегают, их нужно догонять, а в лютую зиму они пропадают · HP само не восстанавливается — лечись аптечками летом и кострами зимой · Зимой и в лютую зиму еда пропадает и все получают урон от холода · Пробел (или кнопка 🕊) — взлететь и лететь быстрее, пока не кончится запас полёта · Enter — открыть чат</div>
   <div id="evoToast"></div>
   <div id="deathToast"></div>
+  <div id="edibleToast"></div>
   <div id="connBadge" style="display:none;"><span class="pulse"></span><span id="connText">синхронизация…</span></div>
   <div id="flyBtn" style="display:none;" title="Взлёт (или пробел)">🕊</div>
 
@@ -385,13 +545,46 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   const DANGEROUS_PREY = { bones:500, dog:1000, rat:1600, scorpion:2000, zombie:5000, mummy:8000 };
 
   // ---------------- Seasons ----------------
-  // Summer (3 min, normal) -> Winter (2 min, cold) -> Cold Winter (1 min, harsh) -> loop
-  const SEASON_CYCLE = [
-    { key:'summer',      name:'Лето',        dur:180000 },
-    { key:'winter',      name:'Зима',        dur:120000 },
-    { key:'cold_winter', name:'Лютая зима',  dur:60000  },
-  ];
+  // Лето (240 мин) и Зима (120 мин) чередуются. Каждая 5-я зима — Лютая зима (120 мин).
+  // Итого: Лето > Зима > Лето > Зима > Лето > Зима > Лето > Зима > Лето > Лютая зима > (повтор)
+  const MIN = 60000;
+  function buildSeasonCycle(){
+    const cycle = [];
+    let winterCount = 0;
+    for(let i=0;i<5;i++){
+      cycle.push({ key:'summer', name:'Лето', dur:240*MIN });
+      winterCount++;
+      if(winterCount % 5 === 0){
+        cycle.push({ key:'cold_winter', name:'Лютая зима', dur:120*MIN });
+      } else {
+        cycle.push({ key:'winter', name:'Зима', dur:120*MIN });
+      }
+    }
+    return cycle;
+  }
+  const SEASON_CYCLE = buildSeasonCycle();
   const SEASON_TOTAL = SEASON_CYCLE.reduce((a,s)=>a+s.dur,0);
+
+  // ---------------- Time of day (day/night) ----------------
+  // Длительность дня/ночи зависит от текущего сезона; цикл повторяется, пока идёт сезон.
+  const DAYNIGHT_CYCLE = {
+    summer:      { day:15*MIN, night:9*MIN  },
+    winter:      { day:11*MIN, night:14*MIN },
+    cold_winter: { day:8*MIN,  night:16*MIN },
+  };
+  function getDayNightState(seasonKey, seasonElapsed){
+    const c = DAYNIGHT_CYCLE[seasonKey] || DAYNIGHT_CYCLE.summer;
+    const total = c.day + c.night;
+    const t = ((seasonElapsed % total) + total) % total;
+    if(t < c.day){
+      return { phase:'day', elapsed:t, remaining:c.day-t, duration:c.day };
+    }
+    return { phase:'night', elapsed:t-c.day, remaining:total-t, duration:c.night };
+  }
+  let dayNightInfo = getDayNightState('summer', 0);
+  let currentDayNightPhase = null; // triggers first transition on game start
+  // Admin day/night override: when set, update() uses this instead of the season-driven cycle.
+  let manualDayNight = null; // { phase, startedAt } | null — holds until its phase duration elapses, then resumes normal cycling
   // Anchor all clients to the same wall-clock cycle so everyone sees the same season together.
   function getSeasonState(now){
     const t = now % SEASON_TOTAL;
@@ -439,6 +632,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
   // ---------------- DOM ----------------
   const selectScreen = document.getElementById('selectScreen');
+  const deathScoreBox = document.getElementById('deathScoreBox');
+  const deathScoreVal = document.getElementById('deathScoreVal');
   const chainEl = document.getElementById('chain');
   const legendEl = document.getElementById('legend');
   const nameInput = document.getElementById('nameInput');
@@ -456,11 +651,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   const evoLabel = document.getElementById('evoLabel');
   const flightBarInner = document.getElementById('flightBarInner');
   const flightLabel = document.getElementById('flightLabel');
+  const abilityBarOuter = document.getElementById('abilityBarOuter');
+  const abilityBarInner = document.getElementById('abilityBarInner');
+  const abilityLabel = document.getElementById('abilityLabel');
   const flyBtn = document.getElementById('flyBtn');
   const hudSeason = document.getElementById('hudSeason');
   const seasonNameEl = document.getElementById('seasonName');
   const seasonBarInner = document.getElementById('seasonBarInner');
   const seasonTimeEl = document.getElementById('seasonTime');
+  const dayNightTimeEl = document.getElementById('dayNightTime');
   const leaderboardEl = document.getElementById('leaderboard');
   const lbList = document.getElementById('lbList');
   const chatPanel = document.getElementById('chatPanel');
@@ -470,6 +669,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   const hint = document.getElementById('hint');
   const evoToast = document.getElementById('evoToast');
   const deathToast = document.getElementById('deathToast');
+  const edibleToast = document.getElementById('edibleToast');
   const connBadge = document.getElementById('connBadge');
   const connText = document.getElementById('connText');
 
@@ -483,45 +683,112 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     </svg>`;
   }
 
-  // select screen chain
+  // Human-readable descriptions of each species' special ability (LMB), matching ABILITY_COOLDOWN/ABILITY_NAMES declared later in the file
+  const ABILITY_DESC = {
+    pigeon:     `Закапывается на 6с и выкапывает 1–4 хлеба вокруг себя.`,
+    crow:       `Хватает ближайшее мясо рядом и уносит его в клюве — при сбросе оно разлетается яблоками.`,
+    stork:      `Резкий рывок на 260px, наносит 550 урона всем на пути.`,
+    hawk:       `Стремительный нырок на ближайшую добычу — атака с разгона.`,
+    pelican:    `Водяной удар: наносит 4250 урона всем в радиусе 110px.`,
+    owl:        `Ночное зрение на 25с — снимает ночное затемнение и запрет на полёт ночью.`,
+    cassowary:  `Разгон (×10 скорости) — повторный клик в течение 5с запускает удар ногами на 11000 урона.`,
+    phoenix:    `Огненный след на 15с — оставляет горящие пятна (1000 урона/сек) во время полёта.`,
+    ostrich:    `Откладывает яйцо (6500 HP) — приносит очки каждую секунду, пока его не съели.`,
+    blackgoose: `Мгновенно восстанавливает запас полёта.`,
+    eagle:      `Хватает когтями ближайшую птицу/добычу — повторный ЛКМ в полёте сбрасывает её на землю и наносит 4400 урона.`,
+    griffin:    `Пир на костях: 50с ест кости в 2 раза быстрее обычного, а на месте съеденных сразу появляются 2 новые.`,
+  };
+  const ABILITY_NAMES_EARLY = { pigeon:'копать', crow:'схватить мясо', stork:'рывок', hawk:'нырок', pelican:'водяной удар', owl:'ночное зрение', cassowary:'удар ногами', phoenix:'огненный след', ostrich:'отложить яйцо', blackgoose:'восстановить полет', eagle:'схватить/бросить', griffin:'пир на костях' };
+
+  // select screen: evolution chain with bird photos, HP, evolution cost and ability description
   ORDER.forEach((key,i)=>{
     const s = SPECIES[key];
-    const step = document.createElement('div');
-    step.className='step';
-    step.innerHTML = `${birdIconSVG(s.color, s.dark)}<b style="color:${s.color}">${s.name}</b><span>${s.maxHp} HP</span>`;
-    chainEl.appendChild(step);
-    if(i<ORDER.length-1){
-      const arrow = document.createElement('div');
-      arrow.className='arrow';
-      arrow.textContent = '→ ' + s.evoNeed + ' очк. →';
-      chainEl.appendChild(arrow);
-    }
+    const card = document.createElement('div');
+    card.className = 'birdCard';
+    const imgSrc = (typeof BIRD_IMAGES!=='undefined' && BIRD_IMAGES[key]) ? BIRD_IMAGES[key] : '';
+    const abilityName = ABILITY_NAMES_EARLY[key];
+    const abilityDesc = ABILITY_DESC[key];
+    const needText = s.evoNeed ? `нужно ${s.evoNeed} очк. для эволюции` : 'финальная форма';
+    card.innerHTML = `
+      ${imgSrc ? `<img src="${imgSrc}" alt="${s.name}">` : birdIconSVG(s.color, s.dark)}
+      <div class="info">
+        <div class="top">
+          <b style="color:${s.color}">${i+1}. ${s.name}</b>
+          <span class="hp">${s.maxHp} HP</span>
+        </div>
+        <div class="need">${needText}</div>
+        ${abilityName ? `<div class="ability"><b>Способность (${abilityName}):</b> ${abilityDesc}</div>` : `<div class="ability">Без активной способности — только клюв.</div>`}
+      </div>`;
+    chainEl.appendChild(card);
   });
-  Object.values(FOOD_TYPES).forEach(f=>{
+
+  // select screen: seasons & day/night info
+  const seasonsEl = document.getElementById('seasons');
+  if(seasonsEl){
+    [
+      { color:'#8FBF6B', name:'Лето', dur:'4 часа', desc:'Вся еда доступна: зерно, хлеб, яблоки, мясо и вся подвижная добыча. День длится 15 мин, ночь — 9 мин. Раз в цикле лето сменяется зимой.' },
+      { color:'#7FD1E0', name:'Зима', dur:'2 часа', desc:'Зерно, хлеб и яблоки исчезают — остаётся только мясо и добыча. Появляются костры (+25 HP, 25 очк). День короче — 11 мин, ночь длиннее — 14 мин.' },
+      { color:'#B79CFF', name:'Лютая зима', dur:'2 часа, каждый 5-й цикл', desc:'Самый суровый сезон: вся обычная еда пропадает, мыши/хомяки/коты исчезают. Появляются аптечки (+20 HP). День всего 8 мин, ночь — 16 мин.' },
+    ].forEach(se=>{
+      const el = document.createElement('div');
+      el.className = 'seasonCard';
+      el.innerHTML = `<span class="dot" style="background:${se.color}"></span><b>${se.name}</b> · ${se.dur}<br>${se.desc}`;
+      seasonsEl.appendChild(el);
+    });
+    const dnCard = document.createElement('div');
+    dnCard.className = 'seasonCard';
+    dnCard.innerHTML = `<b>День и ночь</b><br>Ночью видимость падает — экран темнеет. Сова может активировать ночное зрение и летать без ограничений, остальным ночью летать нельзя.`;
+    seasonsEl.appendChild(dnCard);
+  }
+
+  // select screen: food & prey rows with photos, sorted by points (who eats whom)
+  function preyImgSrc(type){
+    if(typeof PREY_IMAGES!=='undefined' && PREY_IMAGES[type]) return PREY_IMAGES[type];
+    if(typeof FOOD_IMAGES!=='undefined' && FOOD_IMAGES[type]) return FOOD_IMAGES[type];
+    return '';
+  }
+  const foodLegendItems = [
+    ...Object.values(FOOD_TYPES).map(f=>({key:f.key, label:f.label, points:f.points, mobile:false})),
+    ...Object.values(PREY_TYPES).map(f=>({key:f.key, label:f.label, points:f.points, mobile:f.mobile})),
+  ].sort((a,b)=>a.points-b.points);
+  foodLegendItems.forEach(f=>{
     const el = document.createElement('div');
-    el.className='li';
-    el.innerHTML = `<span class="sw" style="background:${f.color}"></span>${f.label} · ${f.points} очк.`;
-    legendEl.appendChild(el);
-  });
-  Object.values(PREY_TYPES).forEach(f=>{
-    const el = document.createElement('div');
-    el.className='li';
-    el.innerHTML = `<span class="sw" style="background:${f.color}"></span>${f.label} (подвижн.) · ${f.points} очк.`;
+    el.className = 'preyRow';
+    const img = preyImgSrc(f.key);
+    el.innerHTML = `${img?`<img src="${img}" alt="${f.label}">`:`<span class="sw" style="background:#D9C27E"></span>`}<span>${f.label}${f.mobile?' <span style="color:var(--ink-dim)">(подвижн.)</span>':''}</span><span class="pts">${f.points} очк.</span>`;
     legendEl.appendChild(el);
   });
   [
-    {color:'#8FBF4A', label:'аптечка (лето)', pts:'без очков · +20 HP'},
-    {color:'#FFB347', label:'костёр (зима)', pts:'25 очк. · +25 HP'},
+    {label:'аптечка (лето/лютая зима)', pts:'без очков · +20 HP'},
+    {label:'костёр (зима)', pts:'25 очк. · +25 HP'},
   ].forEach(f=>{
     const el = document.createElement('div');
-    el.className='li';
-    el.innerHTML = `<span class="sw" style="background:${f.color}"></span>${f.label} · ${f.pts}`;
+    el.className = 'preyRow';
+    el.innerHTML = `<span class="sw" style="background:#FFB347"></span><span>${f.label}</span><span class="pts">${f.pts}</span>`;
     legendEl.appendChild(el);
   });
 
   startBtn.disabled = false; // no character pick needed — everyone starts as sparrow
   function updateStartBtn(){ startBtn.disabled = nameInput.value.trim().length===0; }
   nameInput.addEventListener('input', updateStartBtn);
+  const discordBtn = document.getElementById('discordBtn');
+  if(discordBtn){
+    discordBtn.addEventListener('click', ()=>{ window.open('https://discord.gg/mGjX84d9H','_blank','noopener'); });
+  }
+  const supportBtn = document.getElementById('supportBtn');
+  if(supportBtn){
+    supportBtn.addEventListener('click', ()=>{ window.open('https://ko-fi.com/5sgaming#','_blank','noopener'); });
+  }
+  const howToPlayBtn = document.getElementById('howToPlayBtn');
+  const howToPlayModal = document.getElementById('howToPlayModal');
+  const closeHowToPlay = document.getElementById('closeHowToPlay');
+  if(howToPlayBtn && howToPlayModal){
+    howToPlayBtn.addEventListener('click', ()=>{ howToPlayModal.classList.add('open'); });
+  }
+  if(closeHowToPlay && howToPlayModal){
+    closeHowToPlay.addEventListener('click', ()=>{ howToPlayModal.classList.remove('open'); });
+    howToPlayModal.addEventListener('click', (e)=>{ if(e.target===howToPlayModal) howToPlayModal.classList.remove('open'); });
+  }
   updateStartBtn();
   startBtn.addEventListener('click', ()=>{ if(!startBtn.disabled) startGame(); });
   nameInput.addEventListener('keydown', e=>{ if(e.key==='Enter' && !startBtn.disabled) startGame(); });
@@ -580,6 +847,11 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   function spawnFood(type){
     return { id: foodSeq++, type, x: Math.random()*MAP_W, y: Math.random()*MAP_H, phase:Math.random()*Math.PI*2, collected:false, respawnAt:0 };
   }
+  function spawnFoodAt(type, x, y){
+    const cx = Math.max(0, Math.min(MAP_W, x));
+    const cy = Math.max(0, Math.min(MAP_H, y));
+    return { id: foodSeq++, type, x:cx, y:cy, phase:Math.random()*Math.PI*2, collected:false, respawnAt:0 };
+  }
   function initFood(){
     for(let i=0;i<170;i++) food.push(spawnFood('seed'));
     for(let i=0;i<45;i++) food.push(spawnFood('bread'));
@@ -625,6 +897,12 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   }
   let nextEnvDamageAt = 0;
 
+  function handleDayNightChange(prevPhase, newPhase){
+    if(prevPhase===null) return; // don't toast on initial load
+    if(newPhase==='night') addSystemMessage('🌙 Наступила ночь');
+    else addSystemMessage('☀ Наступил день');
+  }
+
   // ---------------- Damage indicators ----------------
   let damageIndicators = []; // {x, y, damage, createdAt, duration}
   function addDamageIndicator(x, y, damage){
@@ -637,6 +915,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
   // ---------------- Moving prey (mouse / hamster / cat / etc) ----------------
   let prey = [];
+  let flamePatches = []; // phoenix fire-trail patches: {id, x, y, expiresAt, ownerId}
+  let ostrichEggs = []; // ostrich eggs: {id, x, y, hp, ownerId, createdAt}
   let preySeq = 0;
   let preyLimits = { zombie:0, mummy:0, sandhill:0, stonehill:0 }; // Track limited spawns
   
@@ -673,6 +953,18 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   let mouse = { x: window.innerWidth/2, y: window.innerHeight/2 };
   window.addEventListener('mousemove', e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
   window.addEventListener('touchmove', e=>{ if(e.touches[0]){ mouse.x=e.touches[0].clientX; mouse.y=e.touches[0].clientY; } }, {passive:true});
+
+  // Right-click toggles the green/red edibility outline on food & prey.
+  let showEdibleRings = false;
+  let edibleToastTimer = null;
+  canvas.addEventListener('contextmenu', e=>{
+    e.preventDefault();
+    showEdibleRings = !showEdibleRings;
+    edibleToast.textContent = showEdibleRings ? 'Обводка съедобности: ВКЛ' : 'Обводка съедобности: ВЫКЛ';
+    edibleToast.style.opacity = '1';
+    clearTimeout(edibleToastTimer);
+    edibleToastTimer = setTimeout(()=>{ edibleToast.style.opacity = '0'; }, 1600);
+  });
   // Camera zoom — pulls back to give a sense of altitude while flying, smoothly interpolated each frame.
   let camZoom = 1;
   const CAM_ZOOM_FLYING = 0.6;
@@ -686,12 +978,27 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       stageScore:0, totalScore:0, angle:0, lastHitAt:0, invulnUntil: Date.now()+2000,
       hitCooldowns:{}, // otherId -> next allowed hit time (for damage I deal being hit repeatedly)
       flying:false, flightFuel: flightDurationOf('sparrow'),
+      // Species abilities (LMB): pigeon digs for bread, crow carries meat to shatter into apples on takeoff.
+      digging:false, digEndAt:0, carryingMeat:false, abilityCooldownUntil:0,
+      dashActive:false, dashUntil:0, dashId:0, dashDX:0, dashDY:0,
+      waterX:0, waterY:0, waterId:0, waterUntil:0,
+      owlNightVisionUntil:0,
+      cassowaryCharging:false, cassowaryChargeUntil:0,
+      cassowaryDashActive:false, cassowaryDashUntil:0, cassowaryDashDX:0, cassowaryDashDY:0,
+      cassowaryKickId:0, cassowaryKickAt:0,
+      phoenixTrailUntil:0, phoenixNextDropAt:0,
+      // Eagle: grabs another bird/animal with LMB, then LMB again while flying to drop & damage it.
+      eagleCarryType:null, eagleCarryPreyType:null, eagleCarryKey:null, eagleCarryPreyRef:null,
+      eagleGrabId:0, eagleDropId:0, eagleDropAt:0,
+      griffinBonesBuffUntil:0,
     };
   }
 
+  let loopStarted = false;
   function startGame(){
     me = freshPlayer(nameInput.value.trim().slice(0,14));
     selectScreen.style.display='none';
+    deathScoreBox.style.display='none';
     hudSelf.style.display='block';
     hudSeason.style.display='flex';
     leaderboardEl.style.display='block';
@@ -701,9 +1008,29 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     connBadge.style.display='flex';
     flyBtn.style.display='flex';
     hudName.textContent = me.name;
+    hint.style.opacity='1';
     setTimeout(()=>{ hint.style.opacity='0'; }, 7000);
-    startNetworking();
-    requestAnimationFrame(loop);
+    if(!socketConnected){ startNetworking(); }
+    else { socket.emit('join', currentSnapshot()); }
+    if(!loopStarted){ loopStarted = true; requestAnimationFrame(loop); }
+  }
+
+  // Returns the player to the main menu after death, keeping their final score visible
+  // and the socket connection alive so the world (chat, other players) keeps syncing.
+  function returnToMenu(finalScore){
+    me = null;
+    hudSelf.style.display='none';
+    hudSeason.style.display='none';
+    leaderboardEl.style.display='none';
+    chatPanel.style.display='none';
+    minimapWrap.style.display='none';
+    hint.style.display='none';
+    flyBtn.style.display='none';
+    deathScoreVal.textContent = Math.round(finalScore||0);
+    deathScoreBox.style.display='block';
+    selectScreen.style.display='flex';
+    nameInput.value = '';
+    updateStartBtn();
   }
 
   // ---------------- Networking (Socket.IO real-time sync) ----------------
@@ -720,7 +1047,12 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     return {
       name: me.name, species: me.species, x: Math.round(me.x), y: Math.round(me.y),
       hp: Math.round(me.hp), maxHp: me.maxHp, totalScore: me.totalScore, angle: +me.angle.toFixed(2),
-      flying: !!me.flying,
+      flying: !!me.flying, digging: !!me.digging, carryingMeat: !!me.carryingMeat,
+      dashActive: !!me.dashActive, dashUntil: me.dashUntil||0, dashId: me.dashId||0,
+      waterX: me.waterX||0, waterY: me.waterY||0, waterId: me.waterId||0, waterUntil: me.waterUntil||0,
+      eagleCarryKey: me.eagleCarryKey||null, eagleGrabId: me.eagleGrabId||0,
+      eagleDropId: me.eagleDropId||0, eagleDropAt: me.eagleDropAt||0,
+      eagleCarrying: !!me.eagleCarryType,
     };
   }
 
@@ -898,6 +1230,26 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       addSystemMessage(`⚙ Админ-команда: сезон переключён на «${nextS.name}»`);
       return;
     }
+    function forceDayNight(phase){
+      manualDayNight = { phase, startedAt: getVirtualNow() };
+      const c = DAYNIGHT_CYCLE[seasonInfo.key] || DAYNIGHT_CYCLE.summer;
+      const dur = phase==='day' ? c.day : c.night;
+      dayNightInfo = { phase, elapsed:0, remaining:dur, duration:dur };
+      if(dayNightInfo.phase !== currentDayNightPhase){
+        handleDayNightChange(currentDayNightPhase, dayNightInfo.phase);
+        currentDayNightPhase = dayNightInfo.phase;
+      }
+    }
+    if(/^\/admin\s+d$/i.test(text)){
+      forceDayNight('day');
+      addSystemMessage('⚙ Админ-команда: включён День');
+      return;
+    }
+    if(/^\/admin\s+n$/i.test(text)){
+      forceDayNight('night');
+      addSystemMessage('⚙ Админ-команда: включена Ночь');
+      return;
+    }
     if(/^\/admin\s+sum$/i.test(text)){
       eternalSummerMode = true;
       manualSeason = null;
@@ -928,7 +1280,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       return;
     }
     if(/^\/admin\b/i.test(text)){
-      addSystemMessage('⚙ Неизвестная админ-команда. Доступно: /admin v (число), /admin i, /admin ni, /admin next, /admin prev, /admin max, /admin s sum, /admin s win, /admin s winwin, /admin next s, /admin sum, /admin kill, /admin time (число)');
+      addSystemMessage('⚙ Неизвестная админ-команда. Доступно: /admin v (число), /admin i, /admin ni, /admin next, /admin prev, /admin max, /admin s sum, /admin s win, /admin s winwin, /admin next s, /admin sum, /admin d, /admin n, /admin kill, /admin time (число)');
       return;
     }
 
@@ -963,13 +1315,332 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     if(!me) return;
     if(!canFly(me.species)) return;
     if(me.flying) return;
+    if(me.digging) return; // pigeon can't take off mid-dig
     if(me.flightFuel <= 0) return;
+    if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){ showAbilityToast('Ночью летать опасно'); return; }
     me.flying = true;
+    // Crow ability payoff: meat carried in the beak shatters into apples the instant it takes off.
+    if(me.species === 'crow' && me.carryingMeat){
+      me.carryingMeat = false;
+      shatterMeatIntoApples(me.x, me.y);
+    }
   }
   function stopFlying(){
     if(!me) return;
     me.flying = false;
   }
+
+  // ---------------- Species abilities (LMB) ----------------
+  const ABILITY_COOLDOWN = { pigeon:16000, crow:15000, stork:16000, hawk:21000, pelican:27000, owl:40000, cassowary:21000, phoenix:41000, ostrich:32000, blackgoose:28000, eagle:26000, griffin:126000 };
+  const ABILITY_NAMES = { pigeon:'копать', crow:'схватить мясо', stork:'рывок', hawk:'нырок', pelican:'водяной удар', owl:'ночное зрение', cassowary:'удар ногами', phoenix:'огненный след', ostrich:'отложить яйцо', blackgoose:'восстановить полет', eagle:'схватить/бросить', griffin:'пир на костях' };
+  const GRIFFIN_BONES_BUFF_DURATION = 50000; // ms: 2x faster bone-eating, kills spawn 2 fresh bones
+  const OWL_NIGHTVISION_DURATION = 25000;
+  const PIGEON_DIG_DURATION = 6000;
+  const CROW_PICKUP_RANGE = 44;
+  const STORK_DASH_DURATION = 350;   // ms the dash lasts
+  const STORK_DASH_DISTANCE = 260;   // px covered during the dash
+  const STORK_DASH_DAMAGE = 550;
+  const HAWK_DIVE_RANGE_PAD = 16;
+  const PELICAN_WATER_RADIUS = 110;
+  const PELICAN_WATER_DAMAGE = 4250;
+  const PELICAN_WATER_WINDOW = 900;  // ms other clients have to register the hit
+  const CASSOWARY_CHARGE_WINDOW = 5000; // ms window to press LMB again and trigger the strike
+  const CASSOWARY_CHARGE_SPEED_MULT = 10; // speed multiplier while charging
+  const CASSOWARY_DASH_DURATION = 300;   // ms the strike dash lasts
+  const CASSOWARY_DASH_DISTANCE = 220;   // px covered during the strike dash
+  const CASSOWARY_KICK_DAMAGE = 11000;
+  const CASSOWARY_KICK_RANGE = 46; // extra reach beyond the two birds' radii
+  const CASSOWARY_KICK_WINDOW = 380; // ms other clients have to register the hit
+  const PHOENIX_TRAIL_ARM_DURATION = 15000; // ms the fire-trail buff stays armed
+  const PHOENIX_TRAIL_LIFETIME = 3000;      // ms each dropped flame patch burns for
+  const PHOENIX_TRAIL_DPS = 1000;           // damage per second while standing in a flame patch
+  const PHOENIX_TRAIL_RADIUS = 170;          // radius of each flame patch
+  const PHOENIX_TRAIL_DROP_INTERVAL = 140;  // ms between dropped flame patches while armed & flying
+  const OSTRICH_EGG_RADIUS = 16;            // radius of ostrich egg
+  const OSTRICH_EGG_MAX_HP = 6500;           // health of ostrich egg
+  const OSTRICH_EGG_POINTS_PER_SEC = 50000;  // points per second for each uneaten egg
+  const OSTRICH_EGG_POINTS_EATER = 5000000;  // points cassowary/phoenix get for eating egg
+  const EAGLE_GRAB_RANGE = 90;       // px reach to grab another bird / animal
+  const EAGLE_DROP_DAMAGE = 4400;    // damage dealt when the carried victim is dropped
+  const EAGLE_DROP_WINDOW = 700;     // ms other clients have to register the drop hit
+  let abilitySeq = 1;
+
+  function abilityReady(){
+    if(!me) return false;
+    const cd = ABILITY_COOLDOWN[me.species];
+    if(!cd) return false; // this species has no ability
+    if(me.digging || me.carryingMeat || me.dashActive) return false;
+    return Date.now() >= (me.abilityCooldownUntil||0);
+  }
+
+  // Owl's night-vision buff: while active, ignores the night vision black-out and the no-fly-at-night rule.
+  function owlNightVisionActive(p){
+    return !!p && p.species === 'owl' && Date.now() < (p.owlNightVisionUntil||0);
+  }
+
+  function finishDigging(){
+    me.digging = false;
+    const count = 1 + Math.floor(Math.random()*4); // 1-4 bread
+    for(let i=0;i<count;i++){
+      const a = Math.random()*Math.PI*2;
+      const r = 20 + Math.random()*46;
+      food.push(spawnFoodAt('bread', me.x + Math.cos(a)*r, me.y + Math.sin(a)*r));
+    }
+    showAbilityToast(`Голубь выкопал хлеб (${count})`);
+  }
+
+  function shatterMeatIntoApples(x,y){
+    for(let i=0;i<5;i++){
+      const a = (Math.PI*2*i/5) + Math.random()*0.5;
+      const r = 26 + Math.random()*34;
+      food.push(spawnFoodAt('apple', x + Math.cos(a)*r, y + Math.sin(a)*r));
+    }
+    showAbilityToast('Мясо разлетелось на яблоки!');
+  }
+
+  function useAbility(){
+    if(!me) return;
+    const now = Date.now();
+    if(me.species === 'pigeon'){
+      if(!abilityReady()) return;
+      if(me.flying) return; // must be grounded to dig
+      me.digging = true;
+      me.digEndAt = now + PIGEON_DIG_DURATION;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.pigeon;
+      showAbilityToast('Голубь копает…');
+    } else if(me.species === 'crow'){
+      if(!abilityReady()) return;
+      if(me.flying) return; // must be grounded to pick meat up
+      let target = null, bestD = Infinity;
+      for(const f of food){
+        if(f.collected || f.type !== 'meat') continue;
+        if(!foodAllowedInSeason('meat', seasonInfo.key)) continue;
+        const d = Math.hypot(me.x-f.x, me.y-f.y);
+        if(d < me.radius + CROW_PICKUP_RANGE && d < bestD){ bestD = d; target = f; }
+      }
+      if(!target){ showAbilityToast('Рядом нет мяса'); return; }
+      target.collected = true;
+      target.respawnAt = now + 6000 + Math.random()*4000;
+      me.carryingMeat = true;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.crow;
+      showAbilityToast('Ворона схватила мясо в клюв — взлети (Пробел), чтобы разбить его на яблоки');
+    } else if(me.species === 'stork'){
+      if(!abilityReady()) return;
+      if(me.flying) return; // ground dash only
+      me.dashActive = true;
+      me.dashId = abilitySeq++;
+      me.dashUntil = now + STORK_DASH_DURATION;
+      const speed = STORK_DASH_DISTANCE / (STORK_DASH_DURATION/1000);
+      me.dashDX = Math.cos(me.angle) * speed;
+      me.dashDY = Math.sin(me.angle) * speed;
+      me._dashHitPreyIds = new Set();
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.stork;
+      showAbilityToast('Аист совершает рывок!');
+    } else if(me.species === 'hawk'){
+      if(!abilityReady()) return;
+      if(!me.flying) return; // dive only makes sense mid-flight
+      me.flying = false; // slam down to the ground
+      let hitAny = false;
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(pr.type !== 'mouse' && pr.type !== 'hamster' && pr.type !== 'cat') continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        const pt = PREY_TYPES[pr.type];
+        const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+        if(d < me.radius + pt.size + HAWK_DIVE_RANGE_PAD){
+          pr.collected = true;
+          hitAny = true;
+          const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+          pr.respawnAt = now + baseRespawn;
+          me.stageScore += pt.points;
+          me.totalScore += pt.points;
+          if(pt.limit) preyLimits[pr.type]--;
+        }
+      }
+      const spec2 = SPECIES[me.species];
+      if(spec2.evoNeed !== null && me.stageScore >= spec2.evoNeed) evolve();
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.hawk;
+      showAbilityToast(hitAny ? 'Ястреб спикировал и схватил добычу!' : 'Ястреб спикировал, но никого не поймал');
+    } else if(me.species === 'pelican'){
+      if(!abilityReady()) return;
+      if(!me.flying) return; // water bomb only while airborne
+      me.waterX = me.x; me.waterY = me.y;
+      me.waterId = abilitySeq++;
+      me.waterUntil = now + PELICAN_WATER_WINDOW;
+      // instantly splash any local prey caught under the impact
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        const pt = PREY_TYPES[pr.type];
+        const d = Math.hypot(me.waterX-pr.x, me.waterY-pr.y);
+        if(d < PELICAN_WATER_RADIUS + pt.size){
+          pr.hp -= PELICAN_WATER_DAMAGE;
+          addDamageIndicator(pr.x, pr.y, PELICAN_WATER_DAMAGE);
+          if(pr.hp <= 0 && !pr.collected){
+            pr.collected = true;
+            const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+            pr.respawnAt = now + baseRespawn;
+            const spec3 = SPECIES[me.species];
+            me.stageScore += pt.points;
+            me.totalScore += pt.points;
+            if(spec3.evoNeed !== null && me.stageScore >= spec3.evoNeed) evolve();
+            if(pt.limit) preyLimits[pr.type]--;
+          }
+        }
+      }
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.pelican;
+      showAbilityToast('Пеликан обрушил столб воды!');
+    } else if(me.species === 'owl'){
+      if(!abilityReady()) return;
+      if(dayNightInfo.phase !== 'night'){ showAbilityToast('Ночное зрение работает только ночью'); return; }
+      me.owlNightVisionUntil = now + OWL_NIGHTVISION_DURATION;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.owl;
+      showAbilityToast('Сова видит всю карту и может летать!');
+    } else if(me.species === 'cassowary'){
+      if(me.cassowaryCharging){
+        // second LMB press while charging — trigger the strike dash if still within the window
+        me.cassowaryCharging = false;
+        if(now <= me.cassowaryChargeUntil){
+          startCassowaryDash();
+        }
+        return;
+      }
+      if(!abilityReady()) return;
+      me.cassowaryCharging = true;
+      me.cassowaryChargeUntil = now + CASSOWARY_CHARGE_WINDOW;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.cassowary;
+      showAbilityToast('Казуар разгоняется — жми ЛКМ ещё раз для удара!');
+    } else if(me.species === 'phoenix'){
+      if(!abilityReady()) return;
+      me.phoenixTrailUntil = now + PHOENIX_TRAIL_ARM_DURATION;
+      me.phoenixNextDropAt = now;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.phoenix;
+      showAbilityToast('Феникс оставляет огненный след!');
+    } else if(me.species === 'ostrich'){
+      if(!abilityReady()) return;
+      if(me.flying) return; // must be grounded to lay egg
+      const egg = {
+        id: abilitySeq++,
+        x: me.x,
+        y: me.y,
+        hp: OSTRICH_EGG_MAX_HP,
+        ownerId: me.name,
+        createdAt: now
+      };
+      ostrichEggs.push(egg);
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.ostrich;
+      showAbilityToast('Страус отложил яйцо!');
+    } else if(me.species === 'blackgoose'){
+      if(!abilityReady()) return;
+      me.flightFuel = flightDurationOf(me.species); // Restore to maximum flight fuel
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.blackgoose;
+      showAbilityToast('Черный гусь восстановил полет!');
+    } else if(me.species === 'eagle'){
+      if(me.eagleCarryType){
+        // already holding a victim — this press drops it
+        if(!me.flying){ showAbilityToast('Взлети (Пробел), чтобы сбросить добычу!'); return; }
+        if(me.eagleCarryType === 'prey'){
+          const pr = me.eagleCarryPreyRef;
+          if(pr){
+            pr._carriedByEagle = false;
+            pr.x = Math.max(0, Math.min(MAP_W, me.x));
+            pr.y = Math.max(0, Math.min(MAP_H, me.y));
+            const pt = PREY_TYPES[pr.type];
+            pr.hp -= EAGLE_DROP_DAMAGE;
+            addDamageIndicator(pr.x, pr.y, EAGLE_DROP_DAMAGE);
+            if(pr.hp <= 0){
+              pr.collected = true;
+              const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+              pr.respawnAt = now + baseRespawn;
+              me.stageScore += pt.points;
+              me.totalScore += pt.points;
+              const spec5 = SPECIES[me.species];
+              if(spec5.evoNeed !== null && me.stageScore >= spec5.evoNeed) evolve();
+              if(pt.limit) preyLimits[pr.type]--;
+              showAbilityToast('Орёл сбросил добычу с высоты — она погибла!');
+            } else {
+              showAbilityToast('Орёл сбросил добычу с высоты — она ранена и убегает!');
+            }
+          }
+          me.eagleCarryPreyRef = null;
+        } else if(me.eagleCarryType === 'player'){
+          me.eagleDropId = abilitySeq++;
+          me.eagleDropAt = now;
+          showAbilityToast('Орёл сбросил жертву с высоты!');
+          const carriedKey = me.eagleCarryKey;
+          setTimeout(()=>{ if(me.eagleCarryKey === carriedKey) me.eagleCarryKey = null; }, EAGLE_DROP_WINDOW + 300);
+        }
+        me.eagleCarryType = null;
+        me.eagleCarryPreyType = null;
+        return;
+      }
+      if(!abilityReady()) return;
+      // find the nearest grabbable target: another player first, then wild prey
+      let bestD = EAGLE_GRAB_RANGE, targetKey = null, targetPrey = null;
+      otherPlayers.forEach((p,key)=>{
+        if(!p || (p.hp||0) <= 0) return;
+        const d = Math.hypot(me.x-p.x, me.y-p.y);
+        if(d < bestD){ bestD = d; targetKey = key; targetPrey = null; }
+      });
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+        if(d < bestD){ bestD = d; targetPrey = pr; targetKey = null; }
+      }
+      if(!targetKey && !targetPrey){ showAbilityToast('Некого схватить рядом'); return; }
+      if(targetKey){
+        me.eagleCarryType = 'player';
+        me.eagleCarryKey = targetKey;
+        me.eagleGrabId = abilitySeq++;
+        me.eagleDropId = 0;
+        showAbilityToast('Орёл схватил другую птицу когтями!');
+      } else if(targetPrey){
+        // Grab it alive: hide it from the world (no respawn scheduled, no limit change — it's not dead)
+        targetPrey._carriedByEagle = true;
+        me.eagleCarryType = 'prey';
+        me.eagleCarryPreyType = targetPrey.type;
+        me.eagleCarryPreyRef = targetPrey;
+        me.eagleCarryKey = null;
+        me.eagleGrabId = abilitySeq++;
+        showAbilityToast('Орёл схватил добычу когтями!');
+      }
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.eagle;
+    } else if(me.species === 'griffin'){
+      if(!abilityReady()) return;
+      me.griffinBonesBuffUntil = now + GRIFFIN_BONES_BUFF_DURATION;
+      me.abilityCooldownUntil = now + ABILITY_COOLDOWN.griffin;
+      showAbilityToast('Гриф пирует на костях — ест их вдвое быстрее 50с!');
+    }
+  }
+
+  // Cassowary's strike: a quick forward dash that hits everything in its path once.
+  function startCassowaryDash(){
+    const now = Date.now();
+    me.cassowaryDashActive = true;
+    me.cassowaryKickId = abilitySeq++;
+    me.cassowaryKickAt = now;
+    me.cassowaryDashUntil = now + CASSOWARY_DASH_DURATION;
+    const speed = CASSOWARY_DASH_DISTANCE / (CASSOWARY_DASH_DURATION/1000);
+    me.cassowaryDashDX = Math.cos(me.angle) * speed;
+    me.cassowaryDashDY = Math.sin(me.angle) * speed;
+    me._cassowaryDashHitPreyIds = new Set();
+    showAbilityToast('Казуар бьёт ногами!');
+  }
+
+  let abilityToastTimer = null;
+  function showAbilityToast(text){
+    edibleToast.textContent = text;
+    edibleToast.style.opacity = '1';
+    clearTimeout(abilityToastTimer);
+    abilityToastTimer = setTimeout(()=>{ edibleToast.style.opacity = '0'; }, 1800);
+  }
+
+  canvas.addEventListener('mousedown', e=>{
+    if(e.button !== 0) return;
+    if(document.activeElement === chatInput) return;
+    useAbility();
+  });
   window.addEventListener('keydown', e=>{
     if(!me) return;
     if((e.code === 'Space' || e.key === ' ') && document.activeElement !== chatInput){
@@ -1003,7 +1674,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   }
   let deathTimer=null;
   function showDeath(){
-    deathToast.textContent = 'ТЕБЯ СКЛЕВАЛИ — ты снова воробей';
+    deathToast.textContent = 'ТЫ БЫЛ СЪЕДЕН — ты снова воробей';
     deathToast.style.transition='none'; deathToast.style.opacity='0'; deathToast.style.transform='translate(-50%,-50%) scale(0.7)';
     requestAnimationFrame(()=>{
       deathToast.style.transition='opacity .25s ease, transform .35s cubic-bezier(.2,.8,.2,1.2)';
@@ -1022,22 +1693,59 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     requestAnimationFrame(loop);
   }
 
+  // Puts a live prey animal the eagle is carrying back on the ground (used when the eagle
+  // evolves or dies mid-carry, so the animal isn't lost forever). Optionally applies drop damage.
+  function releaseCarriedPrey(applyDamage){
+    if(me.eagleCarryType === 'prey' && me.eagleCarryPreyRef){
+      const pr = me.eagleCarryPreyRef;
+      pr._carriedByEagle = false;
+      pr.x = Math.max(0, Math.min(MAP_W, me.x));
+      pr.y = Math.max(0, Math.min(MAP_H, me.y));
+      if(applyDamage){
+        const pt = PREY_TYPES[pr.type];
+        pr.hp -= EAGLE_DROP_DAMAGE;
+        addDamageIndicator(pr.x, pr.y, EAGLE_DROP_DAMAGE);
+        if(pr.hp <= 0){
+          pr.collected = true;
+          pr.respawnAt = Date.now() + (pt.respawn || (5000 + Math.random()*3000 + pt.points*3));
+          if(pt.limit) preyLimits[pr.type]--;
+        }
+      }
+    }
+    me.eagleCarryPreyRef = null;
+  }
+
   function evolve(){
     const idx = ORDER.indexOf(me.species);
     const next = ORDER[idx+1];
+    releaseCarriedPrey(false);
     me.species = next;
     const s = SPECIES[next];
     me.maxHp = s.maxHp; me.hp = s.maxHp; me.radius = s.radius;
     me.flying = false; me.flightFuel = flightDurationOf(next);
+    me.digging = false; me.digEndAt = 0; me.carryingMeat = false; me.abilityCooldownUntil = 0;
+    me.dashActive = false; me.dashUntil = 0;
+    me.waterUntil = 0;
+    me.owlNightVisionUntil = 0;
+    me.cassowaryCharging = false; me.cassowaryChargeUntil = 0;
+    me.cassowaryDashActive = false; me.cassowaryDashUntil = 0;
+    me.phoenixTrailUntil = 0; me.phoenixNextDropAt = 0;
+    me.eagleCarryType = null; me.eagleCarryPreyType = null; me.eagleCarryKey = null;
+    me.griffinBonesBuffUntil = 0;
     showEvo(s.name);
   }
 
+  let pendingMenuReturn = false;
   function die(){
     const keepTotal = me.totalScore;
+    releaseCarriedPrey(false);
+    // Reset the local player object to a safe, valid state so any code still running later
+    // in this same frame (after this die() call returns) doesn't touch a null player.
+    // The actual switch to the main menu happens on the next frame, before anything else runs.
     Object.assign(me, freshPlayer(me.name));
-    me.totalScore = keepTotal;
+    me.totalScore = keepTotal;  // Сохраняем килы при смерти
     me.x = Math.random()*MAP_W; me.y = Math.random()*MAP_H;
-    showDeath();
+    pendingMenuReturn = true;
   }
 
   function getCamera(){
@@ -1050,6 +1758,11 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   }
 
   function update(dt){
+    if(pendingMenuReturn){
+      pendingMenuReturn = false;
+      returnToMenu(me ? me.totalScore : 0);
+      return;
+    }
     if(!me) return;
     const spec = SPECIES[me.species];
     if(gameTimeMult !== 1) gameClockOffset += dt*1000*(gameTimeMult-1);
@@ -1075,9 +1788,66 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       currentSeasonKey = seasonInfo.key;
     }
 
+    // ---- Time of day: derived from elapsed time within the current season, unless manually overridden ----
+    dayNightInfo = getDayNightState(seasonInfo.key, seasonInfo.elapsed);
+    if(manualDayNight){
+      const c = DAYNIGHT_CYCLE[seasonInfo.key] || DAYNIGHT_CYCLE.summer;
+      const dur = manualDayNight.phase==='day' ? c.day : c.night;
+      const elapsed = now0 - manualDayNight.startedAt;
+      if(elapsed >= dur){
+        manualDayNight = null; // override expired — resume normal season-driven cycle
+      } else {
+        dayNightInfo = { phase:manualDayNight.phase, elapsed, remaining:dur-elapsed, duration:dur };
+      }
+    }
+    if(dayNightInfo.phase !== currentDayNightPhase){
+      handleDayNightChange(currentDayNightPhase, dayNightInfo.phase);
+      currentDayNightPhase = dayNightInfo.phase;
+    }
+
+    // ---- Am I being carried off by an eagle? Follow its position; take damage when it drops me ----
+    {
+      let carryingEagle = null;
+      if(socket && socket.id){
+        otherPlayers.forEach((p)=>{
+          if(p && p.species === 'eagle' && p.eagleCarryKey === socket.id && p.eagleGrabId){
+            carryingEagle = p;
+          }
+        });
+      }
+      if(carryingEagle){
+        if(me._eagleCarriedGrabId !== carryingEagle.eagleGrabId){
+          me._eagleCarriedGrabId = carryingEagle.eagleGrabId;
+          me._eagleCarriedDropId = carryingEagle.eagleDropId||0;
+          me._beingCarriedByEagle = true;
+          showAbilityToast('Тебя схватил орёл!');
+        }
+        me.x = carryingEagle.x; me.y = carryingEagle.y; me.flying = true;
+        if(carryingEagle.eagleDropId && carryingEagle.eagleDropId !== me._eagleCarriedDropId){
+          me._eagleCarriedDropId = carryingEagle.eagleDropId;
+          me._beingCarriedByEagle = false;
+          if(Date.now() > me.invulnUntil && !adminInvulnerable){
+            me.hp -= EAGLE_DROP_DAMAGE;
+            me.lastHitAt = Date.now();
+            addDamageIndicator(me.x, me.y, EAGLE_DROP_DAMAGE);
+          }
+          showAbilityToast('Орёл сбросил тебя с высоты!');
+          if(me.hp <= 0){ die(); return; }
+        }
+      } else if(me._beingCarriedByEagle){
+        me._beingCarriedByEagle = false;
+      }
+    }
+
     // ---- Flight fuel: drains while airborne, recharges while grounded ----
     if(!canFly(me.species)) me.flying = false;
-    if(me.flying){
+    if(me.flying && dayNightInfo.phase==='night' && !owlNightVisionActive(me) && !me._beingCarriedByEagle){
+      me.flying = false; // forced landing — night fell mid-flight
+      showAbilityToast('Ночью летать опасно');
+    }
+    if(me._beingCarriedByEagle){
+      // fuel neither drains nor recharges while being carried — it's the eagle doing the flying
+    } else if(me.flying){
       me.flightFuel -= dt*1000;
       if(me.flightFuel <= 0){
         me.flightFuel = 0;
@@ -1090,6 +1860,38 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       }
     }
     const flightMult = me.flying ? flightSpeedMultOf(me.species) : 1;
+    const chargeMult = me.cassowaryCharging ? CASSOWARY_CHARGE_SPEED_MULT : 1;
+
+    // ---- Pigeon dig ability: finishes after its duration, spawning bread around the player ----
+    if(me.digging && Date.now() >= me.digEndAt){
+      finishDigging();
+    }
+    // ---- Stork dash ability: takes over steering for its short burst, then releases control ----
+    if(me.dashActive && Date.now() >= me.dashUntil){
+      me.dashActive = false;
+    }
+
+    // ---- Cassowary charge ability: if the strike window expires without a second click, no kick happens ----
+    if(me.cassowaryCharging && Date.now() >= me.cassowaryChargeUntil){
+      me.cassowaryCharging = false;
+    }
+    // ---- Cassowary strike dash: takes over steering for its short burst, then releases control ----
+    if(me.cassowaryDashActive && Date.now() >= me.cassowaryDashUntil){
+      me.cassowaryDashActive = false;
+    }
+
+    // ---- Phoenix fire trail: while armed & flying, drop burning patches along the flight path ----
+    {
+      const nowFT = Date.now();
+      if(me.species === 'phoenix' && me.flying && nowFT < (me.phoenixTrailUntil||0) && nowFT >= (me.phoenixNextDropAt||0)){
+        me.phoenixNextDropAt = nowFT + PHOENIX_TRAIL_DROP_INTERVAL;
+        flamePatches.push({ id: abilitySeq++, x: me.x, y: me.y, expiresAt: nowFT + PHOENIX_TRAIL_LIFETIME, ownerId: 'me' });
+      }
+      // Prune expired flame patches
+      if(flamePatches.length){
+        flamePatches = flamePatches.filter(fp => nowFT < fp.expiresAt);
+      }
+    }
 
     // ---- Camera zoom: pull back while flying, ease back in when landed ----
     const targetZoom = me.flying ? CAM_ZOOM_FLYING : 1;
@@ -1099,12 +1901,18 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     const meScreenX = (me.x - cam.x)*camZoom, meScreenY = (me.y - cam.y)*camZoom;
     const dx = mouse.x - meScreenX, dy = mouse.y - meScreenY;
     const dist = Math.hypot(dx,dy);
-    if(dist>4) me.angle = Math.atan2(dy,dx);
+    if(dist>4 && !me.dashActive && !me.cassowaryDashActive) me.angle = Math.atan2(dy,dx);
     const t = Math.min(1, dist/220);
-    if(dist>6){
+    if(me.dashActive){
+      me.x += me.dashDX*dt;
+      me.y += me.dashDY*dt;
+    } else if(me.cassowaryDashActive){
+      me.x += me.cassowaryDashDX*dt;
+      me.y += me.cassowaryDashDY*dt;
+    } else if(dist>6 && !me.digging && !me._beingCarriedByEagle){
       const nx=dx/dist, ny=dy/dist;
-      me.x += nx*spec.speed*flightMult*t*60*dt;
-      me.y += ny*spec.speed*flightMult*t*60*dt;
+      me.x += nx*spec.speed*flightMult*chargeMult*t*60*dt;
+      me.y += ny*spec.speed*flightMult*chargeMult*t*60*dt;
     }
     me.x = Math.max(me.radius, Math.min(MAP_W-me.radius, me.x));
     me.y = Math.max(me.radius, Math.min(MAP_H-me.radius, me.y));
@@ -1113,6 +1921,154 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     // food
     const now = Date.now();
+
+    // ---- Stork dash: damage grounded prey it's allowed to eat, hit once each along the path ----
+    if(me.dashActive && me.species === 'stork'){
+      if(!me._dashHitPreyIds) me._dashHitPreyIds = new Set();
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        if(me._dashHitPreyIds.has(pr.id)) continue;
+        const pt = PREY_TYPES[pr.type];
+        const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+        if(d < me.radius + pt.size + 6){
+          me._dashHitPreyIds.add(pr.id);
+          pr.hp -= STORK_DASH_DAMAGE;
+          addDamageIndicator(pr.x, pr.y, STORK_DASH_DAMAGE);
+          if(pr.hp <= 0){
+            pr.collected = true;
+            const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+            pr.respawnAt = now + baseRespawn;
+            me.stageScore += pt.points;
+            me.totalScore += pt.points;
+            if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+            if(pt.limit) preyLimits[pr.type]--;
+          }
+        }
+      }
+    }
+
+    // ---- Cassowary strike dash: damage anything caught along the kick path, hit once each ----
+    if(me.cassowaryDashActive){
+      if(!me._cassowaryDashHitPreyIds) me._cassowaryDashHitPreyIds = new Set();
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        if(me._cassowaryDashHitPreyIds.has(pr.id)) continue;
+        const pt = PREY_TYPES[pr.type];
+        const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+        if(d < me.radius + pt.size + CASSOWARY_KICK_RANGE){
+          me._cassowaryDashHitPreyIds.add(pr.id);
+          pr.hp -= CASSOWARY_KICK_DAMAGE;
+          addDamageIndicator(pr.x, pr.y, CASSOWARY_KICK_DAMAGE);
+          if(pr.hp <= 0){
+            pr.collected = true;
+            const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+            pr.respawnAt = now + baseRespawn;
+            me.stageScore += pt.points;
+            me.totalScore += pt.points;
+            if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+            if(pt.limit) preyLimits[pr.type]--;
+          }
+        }
+      }
+    }
+
+    // ---- Incoming special-ability damage from other players (decentralized: I compute damage I take) ----
+    if(!me.flying && now > me.invulnUntil && !adminInvulnerable){
+      otherPlayers.forEach((p,key)=>{
+        // Stork dash
+        if(p.species === 'stork' && p.dashActive && now < (p.dashUntil||0)+150){
+          if(!me._dashHits) me._dashHits = {};
+          if(me._dashHits[key] !== p.dashId){
+            const oSpec = SPECIES[p.species]||SPECIES.sparrow;
+            const d = Math.hypot(me.x-p.x, me.y-p.y);
+            if(d < me.radius + oSpec.radius + 20){
+              me._dashHits[key] = p.dashId;
+              me.hp -= STORK_DASH_DAMAGE;
+              me.lastHitAt = now;
+              addDamageIndicator(me.x, me.y, STORK_DASH_DAMAGE);
+              const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
+              me.x += (kx/kd)*20; me.y += (ky/kd)*20;
+            }
+          }
+        }
+        // Pelican water bomb
+        if(p.species === 'pelican' && p.waterId && now < (p.waterUntil||0)){
+          if(!me._waterHits) me._waterHits = {};
+          if(me._waterHits[key] !== p.waterId){
+            const d = Math.hypot(me.x-p.waterX, me.y-p.waterY);
+            if(d < PELICAN_WATER_RADIUS + me.radius){
+              me._waterHits[key] = p.waterId;
+              me.hp -= PELICAN_WATER_DAMAGE;
+              me.lastHitAt = now;
+              addDamageIndicator(me.x, me.y, PELICAN_WATER_DAMAGE);
+            }
+          }
+        }
+        // Cassowary kick
+        if(p.species === 'cassowary' && p.cassowaryKickId && now < (p.cassowaryKickAt||0)+CASSOWARY_KICK_WINDOW){
+          if(!me._kickHits) me._kickHits = {};
+          if(me._kickHits[key] !== p.cassowaryKickId){
+            const oSpec = SPECIES[p.species]||SPECIES.sparrow;
+            const d = Math.hypot(me.x-p.x, me.y-p.y);
+            if(d < me.radius + oSpec.radius + CASSOWARY_KICK_RANGE){
+              me._kickHits[key] = p.cassowaryKickId;
+              me.hp -= CASSOWARY_KICK_DAMAGE;
+              me.lastHitAt = now;
+              addDamageIndicator(me.x, me.y, CASSOWARY_KICK_DAMAGE);
+              const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
+              me.x += (kx/kd)*30; me.y += (ky/kd)*30;
+            }
+          }
+        }
+      });
+      if(me.hp <= 0) die();
+    }
+
+    // ---- Phoenix fire trail: burns anyone standing in a flame patch, tick each frame ----
+    if(!me.flying && !adminInvulnerable && now > me.invulnUntil && flamePatches.length){
+      let burning = false;
+      for(const fp of flamePatches){
+        const d = Math.hypot(me.x-fp.x, me.y-fp.y);
+        if(d < PHOENIX_TRAIL_RADIUS + me.radius){ burning = true; break; }
+      }
+      if(burning){
+        me.hp -= PHOENIX_TRAIL_DPS * dt;
+        me.lastHitAt = now;
+        if(me.hp <= 0){ die(); return; }
+      }
+    }
+
+    // ---- Phoenix fire trail: damages prey standing in flame patches ----
+    if(flamePatches.length){
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+        const pt = PREY_TYPES[pr.type];
+        let burning = false;
+        for(const fp of flamePatches){
+          const d = Math.hypot(pr.x-fp.x, pr.y-fp.y);
+          if(d < PHOENIX_TRAIL_RADIUS + pt.size){
+            burning = true;
+            break;
+          }
+        }
+        if(burning){
+          pr.hp -= PHOENIX_TRAIL_DPS * dt;
+          addDamageIndicator(pr.x, pr.y, PHOENIX_TRAIL_DPS * dt);
+          if(pr.hp <= 0){
+            pr.collected = true;
+            const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+            pr.respawnAt = now + baseRespawn;
+            me.stageScore += pt.points;
+            me.totalScore += pt.points;
+            if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+            if(pt.limit) preyLimits[pr.type]--;
+          }
+        }
+      }
+    }
 
     // seasonal cold damage — Winter: 50 every 10s, Cold Winter: 250 every 15s
     // Birds from eagle and above immune to cold
@@ -1185,6 +2141,22 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       }
     }
 
+    // Cassowary and Phoenix can eat ostrich eggs
+    if((me.species === 'cassowary' || me.species === 'phoenix') && !me.flying){
+      for(let i = ostrichEggs.length - 1; i >= 0; i--){
+        const egg = ostrichEggs[i];
+        const d = Math.hypot(me.x - egg.x, me.y - egg.y);
+        if(d < me.radius + OSTRICH_EGG_RADIUS + 4){
+          me.stageScore += OSTRICH_EGG_POINTS_EATER;
+          me.totalScore += OSTRICH_EGG_POINTS_EATER;
+          if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+          ostrichEggs.splice(i, 1);
+          showAbilityToast('Съедено яйцо страуса! +5000000 очков');
+          break;
+        }
+      }
+    }
+
     // healing stone — permanent, map center, heals any species over time while grounded on it
     if(!me.flying){
       const dHeal = Math.hypot(me.x-HEAL_STONE.x, me.y-HEAL_STONE.y);
@@ -1197,6 +2169,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     for(const pr of prey){
       const pt = PREY_TYPES[pr.type];
       if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
+      if(pr._carriedByEagle) continue; // held in an eagle's talons — frozen & hidden until dropped
       if(pr.collected){
         if(now>=pr.respawnAt){
           // Check limit for limited spawn creatures
@@ -1245,24 +2218,73 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       }
       if(me.flying) continue; // can't hunt ground prey while airborne
       const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+      const griffinBonesBuffed = pr.type==='bones' && me.species==='griffin' && now < (me.griffinBonesBuffUntil||0);
+      const hitCooldown = griffinBonesBuffed ? 750 : 1500; // griffin's ability: eats bones 2x faster
       if(d < me.radius + pt.size + 4 && now >= pr.nextHitAt){
-        pr.nextHitAt = now + 1500;
+        pr.nextHitAt = now + hitCooldown;
         pr.hp -= spec.attack;
         addDamageIndicator(pr.x, pr.y, spec.attack);
         if(pr.hp <= 0){
-          pr.collected = true;
-          const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
-          pr.respawnAt = now + baseRespawn;
           me.stageScore += pt.points;
           me.totalScore += pt.points;
           if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
-          // Decrease limit counter for limited creatures
-          if(pt.limit) preyLimits[pr.type]--;
+          if(griffinBonesBuffed){
+            // Griffin's ability: 2 fresh bones appear right where the eaten one was, instead of the usual single delayed respawn
+            pr.collected = true;
+            pr.respawnAt = now + 999999999; // this instance is permanently retired — replaced by the 2 new ones below
+            for(let i=0;i<2;i++){
+              const a = Math.random()*Math.PI*2;
+              const r = 30 + Math.random()*50;
+              const np = spawnPrey('bones');
+              np.x = Math.max(pt.size, Math.min(MAP_W-pt.size, pr.x + Math.cos(a)*r));
+              np.y = Math.max(pt.size, Math.min(MAP_H-pt.size, pr.y + Math.sin(a)*r));
+              prey.push(np);
+            }
+          } else {
+            pr.collected = true;
+            const baseRespawn = pt.respawn || (5000 + Math.random()*3000 + pt.points*3);
+            pr.respawnAt = now + baseRespawn;
+            // Decrease limit counter for limited creatures
+            if(pt.limit) preyLimits[pr.type]--;
+          }
         }
       }
     }
 
-    // PvP: contact damage from nearby birds (decentralized — I compute damage I take)
+    // Dangerous prey damages ostrich eggs
+    for(const pr of prey){
+      if(pr.collected || pr._carriedByEagle) continue;
+      const pt = PREY_TYPES[pr.type];
+      const dmg = DANGEROUS_PREY[pr.type];
+      if(dmg){
+        for(let i = ostrichEggs.length - 1; i >= 0; i--){
+          const egg = ostrichEggs[i];
+          const d = Math.hypot(egg.x - pr.x, egg.y - pr.y);
+          if(d < OSTRICH_EGG_RADIUS + pt.size + 4 && now >= (pr.nextEggBiteAt||0)){
+            pr.nextEggBiteAt = now + 1500;
+            egg.hp -= dmg;
+            addDamageIndicator(egg.x, egg.y, dmg);
+            if(egg.hp <= 0){
+              ostrichEggs.splice(i, 1);
+            }
+          }
+        }
+      }
+    }
+
+    // Ostrich gains points for each uneaten egg every second
+    if(me.species === 'ostrich' && ostrichEggs.length > 0){
+      if(!me.lastEggPointsAt) me.lastEggPointsAt = now;
+      const timeSinceLastPoints = now - me.lastEggPointsAt;
+      if(timeSinceLastPoints >= 1000){
+        const pointsGained = OSTRICH_EGG_POINTS_PER_SEC * ostrichEggs.length * (timeSinceLastPoints / 1000);
+        me.stageScore += pointsGained;
+        me.totalScore += pointsGained;
+        me.lastEggPointsAt = now;
+        if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+      }
+    }
+
     if(now > me.invulnUntil && !adminInvulnerable && !me.flying){
       const myTier = tierIndex(me.species);
       otherPlayers.forEach((p,key)=>{
@@ -1271,7 +2293,26 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         const d = Math.hypot(me.x-p.x, me.y-p.y);
         if(d < me.radius + oSpec.radius*0.75){
           const attackerTier = tierIndex(oSpec.key);
-          if(attackerTier < myTier) return; // smaller animal deals no damage to a bigger one
+          if(attackerTier < myTier){
+            // I am bigger — I can eat this bird and gain its xp
+            const cd = me.hitCooldowns[key] || 0;
+            if(now >= cd){
+              me.hitCooldowns[key] = now + 1500;
+              // Gain the other player's stage score (xp for evolution)
+              const gainedXp = p.stageScore || 0;
+              me.stageScore += gainedXp;
+              me.totalScore += gainedXp;
+              if(gainedXp > 0){
+                addDamageIndicator(p.x, p.y, gainedXp, true); // visual feedback
+              }
+              // Check for evolution
+              if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+            }
+            return;
+          }
+          // Only bigger birds can damage me — same size or smaller can't hurt
+          if(attackerTier <= myTier) return;
+          
           const cd = me.hitCooldowns[key] || 0;
           if(now >= cd){
             me.hitCooldowns[key] = now + 1500;
@@ -1296,10 +2337,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     hpLabel.textContent = Math.max(0,Math.round(me.hp))+' / '+me.maxHp+' HP';
     if(cur.evoNeed===null){
       evoBarInner.style.width='100%';
-      evoLabel.textContent = 'максимальная стадия — Ворон';
+      evoLabel.textContent = 'максимальная стадия — Феникс';
     } else {
       evoBarInner.style.width = Math.round((me.stageScore/cur.evoNeed)*100)+'%';
-      evoLabel.textContent = `до эволюции: ${me.stageScore} / ${cur.evoNeed}`;
+      evoLabel.textContent = `xp: ${me.stageScore} / ${cur.evoNeed}`;
     }
 
     // flight HUD
@@ -1307,6 +2348,14 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       flightBarInner.style.width = '0%';
       flightBarInner.style.background = 'rgba(255,255,255,0.15)';
       flightLabel.textContent = `${cur.name} не умеет летать`;
+      flyBtn.classList.add('disabled');
+      flyBtn.classList.remove('active');
+    } else if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){
+      const maxFuel = flightDurationOf(me.species);
+      const pct = maxFuel>0 ? Math.round((me.flightFuel/maxFuel)*100) : 0;
+      flightBarInner.style.width = pct+'%';
+      flightBarInner.style.background = 'rgba(255,255,255,0.15)';
+      flightLabel.textContent = 'Ночью летать опасно';
       flyBtn.classList.add('disabled');
       flyBtn.classList.remove('active');
     } else {
@@ -1321,6 +2370,67 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       flyBtn.classList.toggle('active', me.flying);
     }
 
+    // ability HUD (only pigeon & crow have one for now)
+    if(ABILITY_COOLDOWN[me.species]){
+      abilityBarOuter.style.display = 'block';
+      abilityLabel.style.display = 'block';
+      const cdTotal = ABILITY_COOLDOWN[me.species];
+      const remaining = Math.max(0, (me.abilityCooldownUntil||0) - Date.now());
+      if(me.species === 'pigeon' && me.digging){
+        const left = Math.max(0, me.digEndAt - Date.now());
+        abilityBarInner.style.width = Math.round((1-left/PIGEON_DIG_DURATION)*100)+'%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #8C5A2E, #B97A3D)';
+        abilityLabel.textContent = `Копает: ${(left/1000).toFixed(1)}с`;
+      } else if(me.species === 'crow' && me.carryingMeat){
+        abilityBarInner.style.width = '100%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #8B3A2E, #E1503D)';
+        abilityLabel.textContent = 'Мясо в клюве — взлети (Пробел)!';
+      } else if(me.species === 'stork' && me.dashActive){
+        abilityBarInner.style.width = '100%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #E8C27E, #FFF2C9)';
+        abilityLabel.textContent = 'Рывок!';
+      } else if(me.species === 'owl' && owlNightVisionActive(me)){
+        const left = Math.max(0, me.owlNightVisionUntil - Date.now());
+        abilityBarInner.style.width = Math.round((1-left/OWL_NIGHTVISION_DURATION)*100)+'%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #7FD1E0, #C9F0FF)';
+        abilityLabel.textContent = `Ночное зрение: ${(left/1000).toFixed(1)}с`;
+      } else if(me.species === 'cassowary' && me.cassowaryDashActive){
+        abilityBarInner.style.width = '100%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #3a3a3a, #8a8a8a)';
+        abilityLabel.textContent = 'Удар!';
+      } else if(me.species === 'cassowary' && me.cassowaryCharging){
+        const left = Math.max(0, me.cassowaryChargeUntil - Date.now());
+        abilityBarInner.style.width = Math.round((1-left/CASSOWARY_CHARGE_WINDOW)*100)+'%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #3a3a3a, #8a8a8a)';
+        abilityLabel.textContent = `Разгон! ЛКМ для удара: ${(left/1000).toFixed(1)}с`;
+      } else if(me.species === 'phoenix' && Date.now() < (me.phoenixTrailUntil||0)){
+        const left = Math.max(0, me.phoenixTrailUntil - Date.now());
+        abilityBarInner.style.width = Math.round((1-left/PHOENIX_TRAIL_ARM_DURATION)*100)+'%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #CC4400, #FF6B1B)';
+        abilityLabel.textContent = `Огненный след: ${(left/1000).toFixed(1)}с`;
+      } else if(me.species === 'eagle' && me.eagleCarryType){
+        abilityBarInner.style.width = '100%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #8B5A3C, #F0C23C)';
+        abilityLabel.textContent = me.flying ? 'Добыча в когтях — ЛКМ, чтобы сбросить!' : 'Добыча в когтях — взлети (Пробел)!';
+      } else if(me.species === 'griffin' && Date.now() < (me.griffinBonesBuffUntil||0)){
+        const left = Math.max(0, me.griffinBonesBuffUntil - Date.now());
+        abilityBarInner.style.width = Math.round((1-left/GRIFFIN_BONES_BUFF_DURATION)*100)+'%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #6B4423, #C9A76B)';
+        abilityLabel.textContent = `Пир на костях: ${(left/1000).toFixed(1)}с`;
+      } else if(remaining > 0){
+        abilityBarInner.style.width = Math.round((1-remaining/cdTotal)*100)+'%';
+        abilityBarInner.style.background = 'rgba(255,255,255,0.18)';
+        abilityLabel.textContent = `Способность (ЛКМ): ${(remaining/1000).toFixed(1)}с`;
+      } else {
+        abilityBarInner.style.width = '100%';
+        abilityBarInner.style.background = 'linear-gradient(90deg, #B97A3D, #E8C27E)';
+        abilityLabel.textContent = `Способность готова: ${ABILITY_NAMES[me.species]||'ЛКМ'}`;
+      }
+    } else {
+      abilityBarOuter.style.display = 'none';
+      abilityLabel.style.display = 'none';
+    }
+
     // season HUD
     const seasonColors = { summer:'#8FBF6B', winter:'#CFE3F0', cold_winter:'#7EB8E8' };
     seasonNameEl.textContent = seasonInfo.name;
@@ -1331,6 +2441,13 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     const nextName = SEASON_CYCLE[nextIdx].name;
     const secsLeft = Math.max(0, Math.ceil(seasonInfo.remaining/1000));
     seasonTimeEl.textContent = `до «${nextName}»: ${Math.floor(secsLeft/60)}:${String(secsLeft%60).padStart(2,'0')}`;
+
+    // day/night HUD
+    const dnSecsLeft = Math.max(0, Math.ceil(dayNightInfo.remaining/1000));
+    const dnIcon = dayNightInfo.phase==='night' ? '🌙' : '☀';
+    const dnNextLabel = dayNightInfo.phase==='night' ? 'до дня' : 'до ночи';
+    dayNightTimeEl.textContent = `${dnIcon} ${dayNightInfo.phase==='night' ? 'Ночь' : 'День'} · ${dnNextLabel}: ${Math.floor(dnSecsLeft/60)}:${String(dnSecsLeft%60).padStart(2,'0')}`;
+    dayNightTimeEl.style.color = dayNightInfo.phase==='night' ? '#8FA8D9' : '#D9C27E';
 
     // leaderboard
     const all = [{name:me.name+' (ты)', score:me.totalScore, species:me.species}];
@@ -1364,12 +2481,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     ctx.imageSmoothingEnabled=true;
     ctx.drawImage(bgCanvas, camX/BG_SCALE, camY/BG_SCALE, vw/BG_SCALE, vh/BG_SCALE, 0,0,vw,vh);
 
-    // seasonal tint
+    // seasonal tint (но НЕ для cold_winter - она будет после элементов)
     if(seasonInfo.key==='winter'){
       ctx.fillStyle='rgba(240,244,248,0.55)';
-      ctx.fillRect(0,0,vw,vh);
-    } else if(seasonInfo.key==='cold_winter'){
-      ctx.fillStyle='rgba(120,178,224,0.58)';
       ctx.fillRect(0,0,vw,vh);
     }
 
@@ -1380,6 +2494,22 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       const hsx = HEAL_STONE.x-camX, hsy = HEAL_STONE.y-camY;
       if(hsx>-160 && hsy>-160 && hsx<vw+160 && hsy<vh+160){
         drawHealStone(hsx, hsy, (Math.sin(t*1.4)+1)/2);
+      }
+    }
+
+    // pelican water-bomb splashes — brief ground AoE decal, self + other players
+    {
+      const splashSources = [me, ...Array.from(otherPlayers.values())];
+      const FADE = 350;
+      for(const p of splashSources){
+        if(!p || !p.waterId || !p.waterUntil) continue;
+        const endsAt = p.waterUntil + FADE;
+        if(now >= endsAt) continue;
+        const wx = p.waterX - camX, wy = p.waterY - camY;
+        if(wx<-160||wy<-160||wx>vw+160||wy>vh+160) continue;
+        const life = now - (p.waterUntil - PELICAN_WATER_WINDOW);
+        const progress = Math.max(0, Math.min(1, life / (PELICAN_WATER_WINDOW+FADE)));
+        drawWaterSplash(wx, wy, progress);
       }
     }
 
@@ -1422,10 +2552,63 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       dmgJobs.push({dix, diy, alpha, offsetY, damage: di.damage});
     }
 
+    // ---- Ostrich eggs: drawn as ground objects ----
+    for(const egg of ostrichEggs){
+      const ex = egg.x - camX, ey = egg.y - camY;
+      if(ex < -30 || ey < -30 || ex > vw+30 || ey > vh+30) continue;
+      
+      ctx.save();
+      ctx.translate(ex, ey);
+      
+      // Draw egg shape
+      ctx.beginPath();
+      ctx.ellipse(0, 0, OSTRICH_EGG_RADIUS, OSTRICH_EGG_RADIUS*1.3, 0, 0, Math.PI*2);
+      const eggGrad = ctx.createRadialGradient(-OSTRICH_EGG_RADIUS*0.3, -OSTRICH_EGG_RADIUS*0.3, OSTRICH_EGG_RADIUS*0.2, 0, 0, OSTRICH_EGG_RADIUS);
+      eggGrad.addColorStop(0, '#FFFACD');
+      eggGrad.addColorStop(0.5, '#F5E6A0');
+      eggGrad.addColorStop(1, '#DAC070');
+      ctx.fillStyle = eggGrad;
+      ctx.fill();
+      
+      // HP bar
+      const hpPercent = Math.max(0, Math.min(1, egg.hp / OSTRICH_EGG_MAX_HP));
+      ctx.fillStyle = 'rgba(255,255,255,0.2)';
+      ctx.fillRect(-OSTRICH_EGG_RADIUS, -OSTRICH_EGG_RADIUS-8, OSTRICH_EGG_RADIUS*2, 3);
+      ctx.fillStyle = '#E1503D';
+      ctx.fillRect(-OSTRICH_EGG_RADIUS, -OSTRICH_EGG_RADIUS-8, OSTRICH_EGG_RADIUS*2*hpPercent, 3);
+      
+      // Black stroke outline
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, OSTRICH_EGG_RADIUS, OSTRICH_EGG_RADIUS*1.3, 0, 0, Math.PI*2);
+      ctx.stroke();
+      
+      ctx.restore();
+    }
+
+    // ---- Phoenix flame-trail patches: drawn as ground decals, beneath the birds ----
+    for(const fp of flamePatches){
+      const fx = fp.x - camX, fy = fp.y - camY;
+      if(fx < -60 || fy < -60 || fx > vw+60 || fy > vh+60) continue;
+      const life = Math.max(0, (fp.expiresAt - now) / PHOENIX_TRAIL_LIFETIME);
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.35*life;
+      const grad = ctx.createRadialGradient(fx, fy, 0, fx, fy, PHOENIX_TRAIL_RADIUS);
+      grad.addColorStop(0, 'rgba(255,214,92,0.9)');
+      grad.addColorStop(0.5, 'rgba(255,107,27,0.7)');
+      grad.addColorStop(1, 'rgba(204,68,0,0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(fx, fy, PHOENIX_TRAIL_RADIUS, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+    }
+
     // ---------------- Y-sorted pass: prey + birds, so nothing gets permanently stuck underneath the player ----------------
     const drawJobs = [];
     for(const pr of prey){
-      if(pr.collected) continue;
+      if(pr.collected || pr._carriedByEagle) continue;
       if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
       const px=pr.x-camX, py=pr.y-camY;
       if(px<-30||py<-30||px>vw+30||py>vh+30) continue;
@@ -1435,9 +2618,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       const px=p.x-camX, py=p.y-camY;
       if(px<-70||py<-70||px>vw+70||py>vh+70) return;
       const sp = SPECIES[p.species]||SPECIES.sparrow;
-      drawJobs.push({ y: p.y, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name, false, p.hp, p.maxHp, !!p.flying) });
+      drawJobs.push({ y: p.y, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name+(p.eagleCarrying?' 🦅💢':'')+(me._beingCarriedByEagle && p.eagleCarryKey===(socket&&socket.id)?' 😱':''), false, p.hp, p.maxHp, !!p.flying, !!p.digging, !!p.carryingMeat, !!p.dashActive || !!p.cassowaryDashActive) });
     });
-    drawJobs.push({ y: me.y, draw: ()=> drawBird(me.x-camX, me.y-camY, SPECIES[me.species], me.angle, me.name, true, me.hp, me.maxHp, !!me.flying) });
+    drawJobs.push({ y: me.y, draw: ()=> drawBird(me.x-camX, me.y-camY, SPECIES[me.species], me.angle, me.name+(me.eagleCarryType?' 🦅💢':'')+(me._beingCarriedByEagle?' 😱':''), true, me.hp, me.maxHp, !!me.flying, !!me.digging, !!me.carryingMeat, !!me.dashActive || !!me.cassowaryDashActive) });
     drawJobs.sort((a,b)=>a.y-b.y);
     for(const job of drawJobs) job.draw();
 
@@ -1451,6 +2634,24 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       ctx.shadowBlur = 8;
       ctx.fillText('-' + dj.damage, dj.dix, dj.diy + dj.offsetY);
       ctx.restore();
+    }
+
+    // cold_winter tint drawn LAST so it doesn't hide elements
+    if(seasonInfo.key==='cold_winter'){
+      ctx.fillStyle='rgba(120,178,224,0.58)';
+      ctx.fillRect(0,0,vw,vh);
+    }
+
+    // night: screen goes black except a vision circle around the player (radius = bird radius * 3)
+    // Owl's night-vision buff removes this black-out entirely.
+    if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){
+      const px = me.x - camX, py = me.y - camY;
+      const visionR = me.radius * 3;
+      const grad = ctx.createRadialGradient(px, py, visionR*0.7, px, py, visionR);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, 'rgba(0,0,0,1)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, vw, vh);
     }
 
     ctx.restore(); // end world-space zoom transform — everything below is drawn in raw screen space
@@ -1474,6 +2675,21 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     ctx.fillStyle='rgba(236,232,222,0.6)'; ctx.fill();
   }
 
+  function drawEdibleRing(radius, canEat){
+    // Green outline for food/prey the current species can eat, red for what it can't.
+    if(!showEdibleRings) return;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0,0,radius,0,Math.PI*2);
+    const ringColor = canEat ? '#5BD46A' : '#E1503D';
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = ringColor;
+    ctx.shadowColor = ringColor;
+    ctx.shadowBlur = 6;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   function drawFood(x,y,type){
     const f = FOOD_TYPES[type];
     const img = getFoodImage(type);
@@ -1495,6 +2711,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       ctx.fillStyle=grad;
       ctx.shadowColor=f.color; ctx.shadowBlur=8;
       ctx.fill();
+    }
+    if(me){
+      const spec = SPECIES[me.species];
+      if(spec) drawEdibleRing(f.size+3, !!spec.eats[type]);
     }
     ctx.restore();
   }
@@ -1544,6 +2764,27 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       ctx.shadowColor='#8FBF4A'; ctx.shadowBlur=8;
       ctx.fill();
     }
+    ctx.restore();
+  }
+
+  function drawWaterSplash(x,y,progress){
+    // expanding, fading ring for the pelican's water-bomb AoE
+    ctx.save();
+    ctx.translate(x,y);
+    const grow = Math.min(1, progress*2.4);
+    const r = PELICAN_WATER_RADIUS * (0.35 + grow*0.65);
+    const alpha = Math.max(0, 1 - progress);
+    ctx.beginPath();
+    ctx.arc(0,0,r,0,Math.PI*2);
+    const grad = ctx.createRadialGradient(0,0,0,0,0,r);
+    grad.addColorStop(0,`rgba(120,200,255,${0.28*alpha})`);
+    grad.addColorStop(0.75,`rgba(70,150,230,${0.22*alpha})`);
+    grad.addColorStop(1,`rgba(70,150,230,0)`);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = `rgba(200,235,255,${0.65*alpha})`;
+    ctx.stroke();
     ctx.restore();
   }
 
@@ -1649,6 +2890,16 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       ctx.fillStyle='#E1503D';
       ctx.fillRect(x-bw/2, y-pt.size-9, bw*Math.max(0,Math.min(1,pr.hp/pt.maxHp)), 3);
     }
+
+    if(me){
+      const spec = SPECIES[me.species];
+      if(spec){
+        ctx.save();
+        ctx.translate(x,y);
+        drawEdibleRing(pt.size+3, !!spec.eats[pr.type]);
+        ctx.restore();
+      }
+    }
   }
 
   // ---------------- Simple per-species markings (flat/geometric, deliberately not mope.io-style) ----------------
@@ -1665,10 +2916,48 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     return;
   }
 
-  function drawBird(x,y,spec,angle,label,isSelf,hp,maxHp,isFlying){
+  function drawBird(x,y,spec,angle,label,isSelf,hp,maxHp,isFlying,isDigging,isCarryingMeat,isDashing){
     const key = spec.key;
     const lift = isFlying ? Math.min(28, 12 + spec.radius*0.14) : 0;
     const by = y - lift; // bird's drawn position, lifted when airborne
+
+    if(isDashing){
+      // motion streak trailing behind the dashing bird
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      const len = spec.radius*2.6;
+      const grad = ctx.createLinearGradient(-len,0,0,0);
+      grad.addColorStop(0,'rgba(255,242,201,0)');
+      grad.addColorStop(1,'rgba(255,242,201,0.55)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(-len, -spec.radius*0.4);
+      ctx.lineTo(0, -spec.radius*0.15);
+      ctx.lineTo(0, spec.radius*0.15);
+      ctx.lineTo(-len, spec.radius*0.4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    if(isDigging){
+      // brown dirt patch beneath the pigeon while it channels its ability
+      ctx.save();
+      ctx.translate(x, y);
+      const t = performance.now()/300;
+      ctx.beginPath();
+      ctx.ellipse(0, spec.radius*0.25, spec.radius*1.25, spec.radius*0.62, 0, 0, Math.PI*2);
+      const dg = ctx.createRadialGradient(0,spec.radius*0.25,0,0,spec.radius*0.25,spec.radius*1.3);
+      dg.addColorStop(0,'#6B4423');
+      dg.addColorStop(0.6,'#4A2F18');
+      dg.addColorStop(1,'#4A2F1800');
+      ctx.fillStyle = dg;
+      ctx.globalAlpha = 0.75 + Math.sin(t)*0.08;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
 
     if(isFlying){
       // ground shadow directly beneath the bird to sell the altitude
@@ -1694,25 +2983,41 @@ ctx.rotate(angle - Math.PI / 2);
       // Flight visual: our own bird grows while airborne to sell the sense of altitude —
       // 4x for stork-and-smaller species (sparrow/pigeon/crow/stork, whose base radius is tiny),
       // 2x for everything larger.
-      const flyScaleMult = (isFlying && isSelf)
+      const flyScaleMult = (isFlying)
         ? (ORDER.indexOf(key) <= ORDER.indexOf('stork') ? 4 : 2)
         : 1;
       const scale = (spec.radius * 2.4 * flyScaleMult) / Math.max(birdImg.naturalWidth, birdImg.naturalHeight);
       const drawWidth = birdImg.naturalWidth * scale;
       const drawHeight = birdImg.naturalHeight * scale;
       
-      ctx.globalAlpha = (isFlying && isSelf) ? 0.5 : (isSelf ? 1.0 : 0.85);
+      ctx.globalAlpha = (isFlying) ? 0.5 : (isSelf ? 1.0 : 0.85);
       ctx.drawImage(birdImg, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
       ctx.globalAlpha = 1.0;
     }
     
     ctx.restore();
 
+    if(isCarryingMeat){
+      // small meat morsel held in the beak, offset toward the direction the bird is facing
+      ctx.save();
+      const mx = x + Math.cos(angle)*spec.radius*0.85;
+      const my = by + Math.sin(angle)*spec.radius*0.85;
+      ctx.translate(mx, my);
+      ctx.beginPath();
+      ctx.arc(0,0, Math.max(5, spec.radius*0.22), 0, Math.PI*2);
+      const mg = ctx.createRadialGradient(0,0,0,0,0,Math.max(5, spec.radius*0.22)+2);
+      mg.addColorStop(0,'#C96B4A'); mg.addColorStop(0.5,'#8B3A2E'); mg.addColorStop(1,'#5C2419');
+      ctx.fillStyle = mg;
+      ctx.shadowColor='#8B3A2E'; ctx.shadowBlur=6;
+      ctx.fill();
+      ctx.restore();
+    }
+
     // Draw label and HP bar (same as before)
     ctx.font=(isSelf?'600 ':'500 ')+'12px Inter, sans-serif';
     ctx.textAlign='center';
     ctx.fillStyle= isSelf? '#ECE8DE' : 'rgba(236,232,222,0.78)';
-    ctx.fillText(label + (isFlying?' ✈':''), x, by-spec.radius-16);
+    ctx.fillText(label + (isFlying?' ✈':'') + (isDigging?' ⛏':'') + (isCarryingMeat?' 🍖':'') + (isDashing?' ⚡':''), x, by-spec.radius-16);
 
     // hp bar over every bird (self and remote)
     if(typeof hp==='number' && typeof maxHp==='number' && maxHp>0){
