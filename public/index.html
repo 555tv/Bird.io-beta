@@ -306,9 +306,10 @@
 
     <div id="updatesPanel" class="panel">
       <h4 data-i18n="updates_title">Обновления</h4>
-      <div class="upd"><div class="date">02.09</div><div class="text" data-i18n="update11">Глобальное изменение баланса: изенены значения хп-урона у птиц и nps</div></div>
+     <div class="upd"><div class="date">03.09</div><div class="text" data-i18n="update12">Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков</div></div>
+      <div class="upd"><div class="date">02.09</div><div class="text" data-i18n="update11">Глобальное изменение баланса: изенены значения хп-урона у птиц (включительно со способностями) и nps</div></div>
       <div class="upd"><div class="date">01.09</div><div class="text" data-i18n="update10">Добавлены новые животные в тропический биом</div></div>
-     <div class="upd"><div class="date">01.09</div><div class="text" data-i18n="update7">Добавлен новый тропический биом</div></div>
+      <div class="upd"><div class="date">01.09</div><div class="text" data-i18n="update7">Добавлен новый тропический биом</div></div>
       <div class="upd"><div class="date">01.09</div><div class="text" data-i18n="update8">Добавлены новые виды еды в обычный биом (кактус, арбуз, тыква, алоэ)</div></div>
       <div class="upd"><div class="date">31.09</div><div class="text" data-i18n="update9">Переделана механика NPC зомби и мумии</div></div>
       <div class="upd"><div class="date">31.09</div><div class="text" data-i18n="update6">Добавлены новые иконки тропической еды (манго, кокос, арбуз, тыква, кактус и др.) и настроены их размеры</div></div>
@@ -482,6 +483,9 @@ const I18N = {
     update7:'Добавлен новый тропический биом',
     update8:'Добавлены новые виды еды в обычный биом (кактус, арбуз, тыква, алоэ)',
     update9:'Переделана механика NPC зомби и мумии',
+    update10:'Добавлены новые животные в тропический биом',
+    update11:'Глобальное изменение баланса: изенены значения хп-урона у птиц (включительно со способностями) и nps',
+    update12:'Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков',
     support_title_attr:'Поддержать проект',
     howtoplay_btn:'Как играть',
     game_over_label:'Игра окончена — счёт:',
@@ -644,6 +648,9 @@ const I18N = {
     update7:'Added a new tropical biome',
     update8:'Added new food types to the regular biome (cactus, watermelon, pumpkin, aloe)',
     update9:'Reworked zombie and mummy NPC mechanics',
+    update10:'Added new animals to the tropical biome',
+    update11:'Global balance change: adjusted HP damage values for birds (including abilities) and NPCs',
+    update12:'Global game update: core game logic moved to the server to avoid local rendering discrepancies and help synchronize map resources across all players',
     support_title_attr:'Support the project',
     howtoplay_btn:'How to Play',
     game_over_label:'Game over — score:',
@@ -947,6 +954,26 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   // Prey that stings/hurts EVERY bird that touches it, regardless of whether that species is able to eat it
   // (unlike DANGEROUS_PREY above, which only fights back against birds that can't eat it).
   const ALWAYS_DANGEROUS_PREY = { cactus: 450 };
+
+  // Food that restores HP (capped at maxHp) to whichever bird eats it.
+  const HEALING_FOOD = { aloe: 200 };
+
+  // Poison: sources of poison keyed by the prey/food type that inflicts it, each with a duration (ms)
+  // and damage-per-second while active. Applying a new poison takes the strongest dps and the longest
+  // remaining duration rather than stacking additively, so re-poisoning just refreshes/upgrades the effect.
+  const POISON_SOURCES = {
+    tarantula:   { duration: 3000,  dps: 30  }, // weak — tarantula bite
+    wildorchid:  { duration: 5000,  dps: 30  }, // weak damage, medium duration — eating wild orchid
+    scorpion:    { duration: 5000,  dps: 60  }, // medium — scorpion sting
+    blacktaipan: { duration: 10000, dps: 100 }, // strong — black taipan bite
+  };
+  function applyPoison(target, key){
+    const src = POISON_SOURCES[key];
+    if(!src) return;
+    const now = Date.now();
+    target.poisonDps = Math.max(target.poisonDps || 0, src.dps);
+    target.poisonUntil = Math.max(target.poisonUntil || 0, now + src.duration);
+  }
 
   // ---------------- Seasons ----------------
   // Лето (240 мин) и Зима (120 мин) чередуются. Каждая 5-я зима — Лютая зима (120 мин).
@@ -1567,6 +1594,46 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   let otherPlayers = new Map(); // socket id -> {name,species,x,y,hp,maxHp,totalScore,angle,flying}
   let socket = null;
   let socketConnected = false;
+  // Once true, food/prey/collection state comes from the server (Phase 2 of the
+  // "shared world" migration) and all local spawn/respawn/collect logic below is
+  // skipped in favor of sending 'eatItem' requests and applying server broadcasts.
+  // Stays false (and the game falls back to the original fully-local simulation)
+  // if the socket never connects — e.g. solo/offline testing.
+  let usingServerWorld = false;
+
+  function biomeObjFromName(name){ return name === 'tropical' ? BIOME_TROPICAL : BIOME_MAIN; }
+  function serverFoodToClient(item){
+    return {
+      id: item.id, type: item.type, biome: biomeObjFromName(item.biome),
+      x: item.x, y: item.y, phase: Math.random()*Math.PI*2,
+      collected: !!item.collected, respawnAt: item.respawnAt||0,
+      hp: item.hp||0, nextHitAt: item.nextHitAt||0,
+    };
+  }
+  function serverPreyToClient(item){
+    return {
+      id: item.id, type: item.type, biome: biomeObjFromName(item.biome),
+      x: item.x, y: item.y, vx: item.vx||0, vy: item.vy||0,
+      hp: item.hp, collected: !!item.collected, respawnAt: item.respawnAt||0,
+      nextTurnAt: item.nextTurnAt||0, nextHitAt: 0,
+    };
+  }
+  // Patches an existing local food/prey object in place (by id) instead of replacing
+  // it wholesale, so client-only per-item fields (nextAlwaysBiteAt, nextBiteAt,
+  // _carriedByEagle, etc.) that the server doesn't know about survive the update.
+  function mergeFoodUpdate(item){
+    let f = food.find(x=>x.id===item.id);
+    if(!f) f = tropicalFood.find(x=>x.id===item.id);
+    if(!f) return;
+    f.x = item.x; f.y = item.y; f.collected = !!item.collected;
+    f.respawnAt = item.respawnAt||0; f.hp = item.hp||0;
+  }
+  function mergePreyUpdate(item){
+    const pr = prey.find(p=>p.id===item.id);
+    if(!pr) return;
+    pr.x = item.x; pr.y = item.y; pr.vx = item.vx||0; pr.vy = item.vy||0;
+    pr.collected = !!item.collected; pr.respawnAt = item.respawnAt||0; pr.hp = item.hp;
+  }
 
   function updateConnText(){
     if(!socketConnected){ connText.textContent = t('conn_connecting'); return; }
@@ -1580,10 +1647,12 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       flying: !!me.flying, digging: !!me.digging, carryingMeat: !!me.carryingMeat,
       dashActive: !!me.dashActive, dashUntil: me.dashUntil||0, dashId: me.dashId||0,
       waterX: me.waterX||0, waterY: me.waterY||0, waterId: me.waterId||0, waterUntil: me.waterUntil||0,
+      cassowaryKickId: me.cassowaryKickId||0, cassowaryKickAt: me.cassowaryKickAt||0,
       eagleCarryKey: me.eagleCarryKey||null, eagleGrabId: me.eagleGrabId||0,
       eagleDropId: me.eagleDropId||0, eagleDropAt: me.eagleDropAt||0,
       eagleCarrying: !!me.eagleCarryType,
       invulnUntil: me.invulnUntil||0,
+      poisoned: !!(me.poisonUntil && me.poisonUntil > Date.now()),
     };
   }
 
@@ -1628,6 +1697,116 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     socket.on('playerLeft', (id)=>{
       otherPlayers.delete(id);
       updateConnText();
+    });
+    // Authoritative world snapshot (Phase 2): the server owns where every food/prey
+    // item is and whether it's been eaten. Replaces whatever the client generated
+    // locally at load, so every connected client renders the same map.
+    socket.on('worldState', (data)=>{
+      if(!data) return;
+      const allFood = Array.isArray(data.food) ? data.food : [];
+      const allPrey = Array.isArray(data.prey) ? data.prey : [];
+      food = allFood.filter(f=>f.biome!=='tropical').map(serverFoodToClient);
+      tropicalFood = allFood.filter(f=>f.biome==='tropical').map(serverFoodToClient);
+      prey = allPrey.map(serverPreyToClient);
+      ostrichEggs = Array.isArray(data.eggs) ? data.eggs.map(e=>({...e})) : [];
+      flamePatches = Array.isArray(data.flames) ? data.flames.map(f=>({...f})) : [];
+      usingServerWorld = true;
+    });
+    // A single food/prey item changed (pecked, fully eaten, or respawned elsewhere).
+    socket.on('foodUpdate', (item)=>{ if(usingServerWorld) mergeFoodUpdate(item); });
+    socket.on('preyUpdate', (item)=>{ if(usingServerWorld) mergePreyUpdate(item); });
+    // Lightweight, frequent position-only update for wandering prey.
+    socket.on('preyPositions', (list)=>{
+      if(!usingServerWorld || !Array.isArray(list)) return;
+      for(const upd of list){
+        const pr = prey.find(p=>p.id===upd.id);
+        if(pr){ pr.x = upd.x; pr.y = upd.y; }
+      }
+    });
+    // Ostrich eggs & phoenix flame trail (Phase 6): these used to be 100% local arrays —
+    // other players couldn't see, eat, or be burned by them at all. Now server-owned.
+    socket.on('eggSpawn', (egg)=>{ if(usingServerWorld && egg) ostrichEggs.push(egg); });
+    socket.on('eggRemove', (data)=>{
+      if(!usingServerWorld || !data) return;
+      const i = ostrichEggs.findIndex(e=>e.id===data.id);
+      if(i!==-1) ostrichEggs.splice(i,1);
+    });
+    socket.on('eggHpUpdate', (data)=>{
+      if(!usingServerWorld || !data) return;
+      const egg = ostrichEggs.find(e=>e.id===data.id);
+      if(egg) egg.hp = data.hp;
+    });
+    socket.on('eggPoints', (data)=>{
+      if(!me || !data) return;
+      const spec = SPECIES[me.species];
+      me.stageScore += data.points||0;
+      me.totalScore += data.points||0;
+      if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+    });
+    socket.on('flamePatchAdd', (patch)=>{ if(usingServerWorld && patch) flamePatches.push(patch); });
+    // The server confirmed WE were the one who finished eating something — apply
+    // score/heal/poison locally (still client-side math for now, Phase 3 territory).
+    socket.on('eatResult', (data)=>{
+      if(!me || !data) return;
+      const spec = SPECIES[me.species];
+      me.stageScore += data.points||0;
+      me.totalScore += data.points||0;
+      const heal = HEALING_FOOD[data.type];
+      if(heal) me.hp = Math.min(me.maxHp, me.hp + heal);
+      if(data.kind === 'food' && POISON_SOURCES[data.type]) applyPoison(me, data.type);
+      if(data.kind === 'egg') showAbilityToast(t('egg_eaten'));
+      if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+    });
+    // Authoritative PvE damage (Phase 3): the server has refereed dangerous prey/food
+    // biting us (distance/cooldown/species all re-checked server-side) and tells us
+    // exactly how much hp we lost and whether it poisoned us. This is now the only
+    // place PvE bite damage is applied on the client once connected to a server.
+    socket.on('pveHit', (data)=>{
+      if(!me || !data) return;
+      me.hp = Number.isFinite(data.hp) ? data.hp : me.hp;
+      if(data.damage > 0){
+        me.lastHitAt = Date.now();
+        addDamageIndicator(me.x, me.y, data.damage);
+        // Fire doesn't shove you around the way a bite or sting does.
+        if(data.kind !== 'flame' && Number.isFinite(data.x) && Number.isFinite(data.y)){
+          const kx=(me.x-data.x)||0.01, ky=(me.y-data.y)||0.01;
+          const kd=Math.hypot(kx,ky)||1;
+          me.x += (kx/kd)*14; me.y += (ky/kd)*14;
+        }
+      }
+      if(data.poisonKey) applyPoison(me, data.poisonKey);
+      if(me.hp <= 0) die();
+    });
+    // Authoritative special-ability PvP damage (Phase 4): the server confirmed a
+    // stork dash / pelican water bomb / cassowary kick / eagle drop actually landed
+    // on us, re-validated against its own copy of the attacker's ability state.
+    socket.on('abilityHitResult', (data)=>{
+      if(!me || !data) return;
+      me.hp = Number.isFinite(data.hp) ? data.hp : me.hp;
+      me.lastHitAt = Date.now();
+      addDamageIndicator(me.x, me.y, data.damage);
+      if(data.knockback && Number.isFinite(data.x) && Number.isFinite(data.y)){
+        const kx=(me.x-data.x)||0.01, ky=(me.y-data.y)||0.01, kd=Math.hypot(kx,ky)||1;
+        const knock = data.kind === 'kick' ? 30 : 20;
+        me.x += (kx/kd)*knock; me.y += (ky/kd)*knock;
+      }
+      if(me.hp <= 0) die();
+    });
+    // Authoritative shared season/day-night/time-override state (Phase 5): whenever any
+    // player's /admin command changes it, the server echoes the new state back to
+    // EVERYONE (including whoever typed it), so a forced season/day-night is the same
+    // world for every connected player instead of a local-only bubble.
+    socket.on('worldTime', (data)=>{
+      if(!data) return;
+      if(data.eternalSummer){
+        eternalSummerMode = true;
+        manualSeason = null;
+      } else {
+        eternalSummerMode = false;
+        manualSeason = data.seasonOverride ? { key: data.seasonOverride.key, startedAt: data.seasonOverride.startedAt } : null;
+      }
+      manualDayNight = data.dayNightOverride ? { phase: data.dayNightOverride.phase, startedAt: data.dayNightOverride.startedAt } : null;
+      gameTimeMult = Number.isFinite(data.gameTimeMult) ? data.gameTimeMult : 1;
     });
     socket.on('chat', (m)=>{
       if(m.name === me.name) return; // our own messages are already added locally
@@ -1726,7 +1905,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(!isFinite(value) || value < 0){
         addSystemMessage(t('admin_time_invalid'));
       } else {
-        gameTimeMult = value;
+        if(socketConnected){ socket.emit('adminSetTimeMult', { value }); }
+        else { gameTimeMult = value; }
         addSystemMessage(value === 1
           ? t('admin_time_reset')
           : t('admin_time_set',{value}));
@@ -1764,6 +1944,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     function forceSeason(key){
       const s = SEASON_CYCLE.find(x=>x.key===key);
       if(!s){ addSystemMessage(t('admin_season_unavailable')); return; }
+      if(socketConnected){
+        socket.emit('adminSetSeason', { key });
+        return;
+      }
       eternalSummerMode = false;
       manualSeason = { key, startedAt: getVirtualNow() };
       seasonInfo = { index:SEASON_CYCLE.indexOf(s), key:s.key, name:s.name, elapsed:0, remaining:s.dur, duration:s.dur };
@@ -1795,6 +1979,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       return;
     }
     function forceDayNight(phase){
+      if(socketConnected){
+        socket.emit('adminSetDayNight', { phase });
+        return;
+      }
       manualDayNight = { phase, startedAt: getVirtualNow() };
       const c = DAYNIGHT_CYCLE[seasonInfo.key] || DAYNIGHT_CYCLE.summer;
       const dur = phase==='day' ? c.day : c.night;
@@ -1815,11 +2003,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       return;
     }
     if(/^\/admin\s+sum$/i.test(text)){
-      eternalSummerMode = true;
-      manualSeason = null;
-      if(currentSeasonKey !== 'summer'){
-        handleSeasonChange(currentSeasonKey, 'summer', Date.now());
-        currentSeasonKey = 'summer';
+      if(socketConnected){
+        socket.emit('adminEternalSummer');
+      } else {
+        eternalSummerMode = true;
+        manualSeason = null;
+        if(currentSeasonKey !== 'summer'){
+          handleSeasonChange(currentSeasonKey, 'summer', Date.now());
+          currentSeasonKey = 'summer';
+        }
       }
       addSystemMessage(t('admin_eternal_summer'));
       return;
@@ -1918,21 +2110,21 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   const CROW_PICKUP_RANGE = 44;
   const STORK_DASH_DURATION = 350;   // ms the dash lasts
   const STORK_DASH_DISTANCE = 260;   // px covered during the dash
-  const STORK_DASH_DAMAGE = 550;
+  const STORK_DASH_DAMAGE = 170;
   const HAWK_DIVE_RANGE_PAD = 16;
   const PELICAN_WATER_RADIUS = 110;
-  const PELICAN_WATER_DAMAGE = 4250;
+  const PELICAN_WATER_DAMAGE = 500;
   const PELICAN_WATER_WINDOW = 900;  // ms other clients have to register the hit
   const CASSOWARY_CHARGE_WINDOW = 5000; // ms window to press LMB again and trigger the strike
   const CASSOWARY_CHARGE_SPEED_MULT = 10; // speed multiplier while charging
   const CASSOWARY_DASH_DURATION = 300;   // ms the strike dash lasts
   const CASSOWARY_DASH_DISTANCE = 220;   // px covered during the strike dash
-  const CASSOWARY_KICK_DAMAGE = 11000;
+  const CASSOWARY_KICK_DAMAGE = 2000;
   const CASSOWARY_KICK_RANGE = 46; // extra reach beyond the two birds' radii
   const CASSOWARY_KICK_WINDOW = 380; // ms other clients have to register the hit
   const PHOENIX_TRAIL_ARM_DURATION = 15000; // ms the fire-trail buff stays armed
   const PHOENIX_TRAIL_LIFETIME = 3000;      // ms each dropped flame patch burns for
-  const PHOENIX_TRAIL_DPS = 1000;           // damage per second while standing in a flame patch
+  const PHOENIX_TRAIL_DPS = 500;            // damage per second while standing in a flame patch
   const PHOENIX_TRAIL_RADIUS = 170;          // radius of each flame patch
   const PHOENIX_TRAIL_DROP_INTERVAL = 140;  // ms between dropped flame patches while armed & flying
   const OSTRICH_EGG_RADIUS = 16;            // radius of ostrich egg
@@ -1940,7 +2132,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   const OSTRICH_EGG_POINTS_PER_SEC = 50000;  // points per second for each uneaten egg
   const OSTRICH_EGG_POINTS_EATER = 5000000;  // points cassowary/phoenix get for eating egg
   const EAGLE_GRAB_RANGE = 90;       // px reach to grab another bird / animal
-  const EAGLE_DROP_DAMAGE = 4400;    // damage dealt when the carried victim is dropped
+  const EAGLE_DROP_DAMAGE = 850;     // damage dealt when the carried victim is dropped
   const EAGLE_DROP_WINDOW = 700;     // ms other clients have to register the drop hit
   let abilitySeq = 1;
 
@@ -2094,20 +2286,25 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       me.phoenixTrailUntil = now + PHOENIX_TRAIL_ARM_DURATION;
       me.phoenixNextDropAt = now;
       me.abilityCooldownUntil = now + ABILITY_COOLDOWN.phoenix;
+      if(usingServerWorld) socket.emit('armPhoenixTrail');
       showAbilityToast(t('phoenix_trail'));
     } else if(me.species === 'ostrich'){
       if(!abilityReady()) return;
       if(me.flying) return; // must be grounded to lay egg
-      const egg = {
-        id: abilitySeq++,
-        x: me.x,
-        y: me.y,
-        hp: OSTRICH_EGG_MAX_HP,
-        ownerId: me.name,
-        createdAt: now
-      };
-      ostrichEggs.push(egg);
       me.abilityCooldownUntil = now + ABILITY_COOLDOWN.ostrich;
+      if(usingServerWorld){
+        socket.emit('layEgg');
+      } else {
+        const egg = {
+          id: abilitySeq++,
+          x: me.x,
+          y: me.y,
+          hp: OSTRICH_EGG_MAX_HP,
+          ownerId: me.name,
+          createdAt: now
+        };
+        ostrichEggs.push(egg);
+      }
       showAbilityToast(t('ostrich_egg_laid'));
     } else if(me.species === 'blackgoose'){
       if(!abilityReady()) return;
@@ -2386,11 +2583,11 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     // ---- Am I being carried off by an eagle? Follow its position; take damage when it drops me ----
     {
-      let carryingEagle = null;
+      let carryingEagle = null, carryingEagleId = null;
       if(socket && socket.id){
-        otherPlayers.forEach((p)=>{
+        otherPlayers.forEach((p,key)=>{
           if(p && p.species === 'eagle' && p.eagleCarryKey === socket.id && p.eagleGrabId){
-            carryingEagle = p;
+            carryingEagle = p; carryingEagleId = key;
           }
         });
       }
@@ -2406,9 +2603,13 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
           me._eagleCarriedDropId = carryingEagle.eagleDropId;
           me._beingCarriedByEagle = false;
           if(Date.now() > me.invulnUntil && !adminInvulnerable){
-            me.hp -= EAGLE_DROP_DAMAGE;
-            me.lastHitAt = Date.now();
-            addDamageIndicator(me.x, me.y, EAGLE_DROP_DAMAGE);
+            if(usingServerWorld && carryingEagleId){
+              socket.emit('abilityHit', { attackerId: carryingEagleId, kind: 'eagleDrop' });
+            } else {
+              me.hp -= EAGLE_DROP_DAMAGE;
+              me.lastHitAt = Date.now();
+              addDamageIndicator(me.x, me.y, EAGLE_DROP_DAMAGE);
+            }
           }
           showAbilityToast(t('dropped_by_eagle'));
           if(me.hp <= 0){ die(); return; }
@@ -2464,7 +2665,11 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       const nowFT = Date.now();
       if(me.species === 'phoenix' && me.flying && nowFT < (me.phoenixTrailUntil||0) && nowFT >= (me.phoenixNextDropAt||0)){
         me.phoenixNextDropAt = nowFT + PHOENIX_TRAIL_DROP_INTERVAL;
-        flamePatches.push({ id: abilitySeq++, x: me.x, y: me.y, expiresAt: nowFT + PHOENIX_TRAIL_LIFETIME, ownerId: 'me' });
+        if(usingServerWorld){
+          socket.emit('dropFlamePatch');
+        } else {
+          flamePatches.push({ id: abilitySeq++, x: me.x, y: me.y, expiresAt: nowFT + PHOENIX_TRAIL_LIFETIME, ownerId: 'me' });
+        }
       }
       // Prune expired flame patches
       if(flamePatches.length){
@@ -2500,6 +2705,19 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     // food
     const now = Date.now();
+
+    // ---- Poison: steady damage over time from tarantula/scorpion/blacktaipan bites or eating wild orchid ----
+    if(me.poisonUntil && now < me.poisonUntil){
+      me.hp -= me.poisonDps * dt;
+      if(now >= (me.nextPoisonIndicatorAt||0)){
+        me.nextPoisonIndicatorAt = now + 1000;
+        addDamageIndicator(me.x, me.y, Math.round(me.poisonDps));
+      }
+      if(me.hp <= 0){ die(); return; }
+    } else if(me.poisonUntil){
+      me.poisonUntil = 0;
+      me.poisonDps = 0;
+    }
 
     // ---- Stork dash: damage grounded prey it's allowed to eat, hit once each along the path ----
     if(me.dashActive && me.species === 'stork'){
@@ -2553,7 +2771,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       }
     }
 
-    // ---- Incoming special-ability damage from other players (decentralized: I compute damage I take) ----
+    // ---- Incoming special-ability damage from other players ----
+    // I still do my own local hit-detection against the attacker's broadcast state
+    // (I need to know WHEN to ask), but the actual damage now only lands once the
+    // server confirms it via 'abilityHitResult' — see socket.on('abilityHitResult').
     if(!me.flying && now > me.invulnUntil && !adminInvulnerable){
       otherPlayers.forEach((p,key)=>{
         // Stork dash
@@ -2564,11 +2785,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
             const d = Math.hypot(me.x-p.x, me.y-p.y);
             if(d < me.radius + oSpec.radius + 20){
               me._dashHits[key] = p.dashId;
-              me.hp -= STORK_DASH_DAMAGE;
-              me.lastHitAt = now;
-              addDamageIndicator(me.x, me.y, STORK_DASH_DAMAGE);
-              const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
-              me.x += (kx/kd)*20; me.y += (ky/kd)*20;
+              if(usingServerWorld){
+                socket.emit('abilityHit', { attackerId: key, kind: 'dash' });
+              } else {
+                me.hp -= STORK_DASH_DAMAGE;
+                me.lastHitAt = now;
+                addDamageIndicator(me.x, me.y, STORK_DASH_DAMAGE);
+                const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
+                me.x += (kx/kd)*20; me.y += (ky/kd)*20;
+              }
             }
           }
         }
@@ -2579,9 +2804,13 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
             const d = Math.hypot(me.x-p.waterX, me.y-p.waterY);
             if(d < PELICAN_WATER_RADIUS + me.radius){
               me._waterHits[key] = p.waterId;
-              me.hp -= PELICAN_WATER_DAMAGE;
-              me.lastHitAt = now;
-              addDamageIndicator(me.x, me.y, PELICAN_WATER_DAMAGE);
+              if(usingServerWorld){
+                socket.emit('abilityHit', { attackerId: key, kind: 'water' });
+              } else {
+                me.hp -= PELICAN_WATER_DAMAGE;
+                me.lastHitAt = now;
+                addDamageIndicator(me.x, me.y, PELICAN_WATER_DAMAGE);
+              }
             }
           }
         }
@@ -2593,11 +2822,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
             const d = Math.hypot(me.x-p.x, me.y-p.y);
             if(d < me.radius + oSpec.radius + CASSOWARY_KICK_RANGE){
               me._kickHits[key] = p.cassowaryKickId;
-              me.hp -= CASSOWARY_KICK_DAMAGE;
-              me.lastHitAt = now;
-              addDamageIndicator(me.x, me.y, CASSOWARY_KICK_DAMAGE);
-              const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
-              me.x += (kx/kd)*30; me.y += (ky/kd)*30;
+              if(usingServerWorld){
+                socket.emit('abilityHit', { attackerId: key, kind: 'kick' });
+              } else {
+                me.hp -= CASSOWARY_KICK_DAMAGE;
+                me.lastHitAt = now;
+                addDamageIndicator(me.x, me.y, CASSOWARY_KICK_DAMAGE);
+                const kx=(me.x-p.x)||0.01, ky=(me.y-p.y)||0.01, kd=Math.hypot(kx,ky)||1;
+                me.x += (kx/kd)*30; me.y += (ky/kd)*30;
+              }
             }
           }
         }
@@ -2605,22 +2838,29 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(me.hp <= 0) die();
     }
 
-    // ---- Phoenix fire trail: burns anyone standing in a flame patch, tick each frame ----
+    // ---- Phoenix fire trail: burns anyone standing in a flame patch ----
     if(!me.flying && !adminInvulnerable && now > me.invulnUntil && flamePatches.length){
-      let burning = false;
+      let burningPatch = null;
       for(const fp of flamePatches){
         const d = Math.hypot(me.x-fp.x, me.y-fp.y);
-        if(d < PHOENIX_TRAIL_RADIUS + me.radius){ burning = true; break; }
+        if(d < PHOENIX_TRAIL_RADIUS + me.radius){ burningPatch = fp; break; }
       }
-      if(burning){
-        me.hp -= PHOENIX_TRAIL_DPS * dt;
-        me.lastHitAt = now;
-        if(me.hp <= 0){ die(); return; }
+      if(burningPatch){
+        if(usingServerWorld){
+          if(now >= (burningPatch._nextBurnRequestAt||0)){
+            burningPatch._nextBurnRequestAt = now + 300;
+            socket.emit('pveBite', { kind:'flame', id: burningPatch.id });
+          }
+        } else {
+          me.hp -= PHOENIX_TRAIL_DPS * dt;
+          me.lastHitAt = now;
+          if(me.hp <= 0){ die(); return; }
+        }
       }
     }
 
     // ---- Phoenix fire trail: damages prey standing in flame patches ----
-    if(flamePatches.length){
+    if(!usingServerWorld && flamePatches.length){
       for(const pr of prey){
         if(pr.collected || pr._carriedByEagle) continue;
         if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
@@ -2667,7 +2907,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     for(const f of food){
       if(f.collected){
-        if(now>=f.respawnAt) Object.assign(f, spawnFood(f.type, f.biome || BIOME_MAIN), {id:f.id});
+        if(!usingServerWorld && now>=f.respawnAt) Object.assign(f, spawnFood(f.type, f.biome || BIOME_MAIN), {id:f.id});
         continue;
       }
       if(me.flying) continue; // can't peck the ground while airborne
@@ -2678,19 +2918,33 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(alwaysDmg && now > me.invulnUntil && !adminInvulnerable){
         const dAlways = Math.hypot(me.x-f.x, me.y-f.y);
         if(dAlways < me.radius + FOOD_TYPES[f.type].size + 4 && now >= (f.nextAlwaysBiteAt||0)){
-          f.nextAlwaysBiteAt = now + 1500;
-          me.hp -= alwaysDmg;
-          me.lastHitAt = now;
-          addDamageIndicator(me.x, me.y, alwaysDmg);
-          const akx=(me.x-f.x)||0.01, aky=(me.y-f.y)||0.01;
-          const akd=Math.hypot(akx,aky)||1;
-          me.x += (akx/akd)*14; me.y += (aky/akd)*14;
-          if(me.hp <= 0) die();
+          if(usingServerWorld){
+            f.nextAlwaysBiteAt = now + 300; // just a request-throttle; server owns the real 1500ms cooldown
+            socket.emit('pveBite', { kind:'food', id: f.id });
+          } else {
+            f.nextAlwaysBiteAt = now + 1500;
+            me.hp -= alwaysDmg;
+            me.lastHitAt = now;
+            addDamageIndicator(me.x, me.y, alwaysDmg);
+            const akx=(me.x-f.x)||0.01, aky=(me.y-f.y)||0.01;
+            const akd=Math.hypot(akx,aky)||1;
+            me.x += (akx/akd)*14; me.y += (aky/akd)*14;
+            if(me.hp <= 0) die();
+          }
         }
       }
       if(!spec.eats[f.type]) continue;
       const d = Math.hypot(me.x-f.x, me.y-f.y);
       if(d < me.radius + FOOD_TYPES[f.type].size + 4){
+        if(usingServerWorld){
+          // Ask the server to referee this eat — it re-checks distance/species and
+          // owns the collected/respawn/hp state; we just throttle how often we ask.
+          if(now >= (f._nextEatRequestAt||0)){
+            f._nextEatRequestAt = now + 300;
+            socket.emit('eatItem', { kind:'food', id: f.id });
+          }
+          continue;
+        }
         const ft = FOOD_TYPES[f.type];
         if(ft.maxHp){
           // tough plants (e.g. pumpkin, cactus) must be pecked down before they're collected
@@ -2705,6 +2959,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
         me.stageScore += ft.points;
         me.totalScore += ft.points;
+        const heal = HEALING_FOOD[f.type];
+        if(heal) me.hp = Math.min(me.maxHp, me.hp + heal);
         if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
       }
     }
@@ -2712,13 +2968,20 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     // tropical food — only in tropical biome
     for(const f of tropicalFood){
       if(f.collected){
-        if(now>=f.respawnAt) Object.assign(f, spawnTropicalFood(f.type)[0], {id:f.id});
+        if(!usingServerWorld && now>=f.respawnAt) Object.assign(f, spawnTropicalFood(f.type)[0], {id:f.id});
         continue;
       }
       if(me.flying) continue; // can't peck the ground while airborne
       if(!spec.eats[f.type]) continue;
       const d = Math.hypot(me.x-f.x, me.y-f.y);
       if(d < me.radius + FOOD_TYPES[f.type].size + 4){
+        if(usingServerWorld){
+          if(now >= (f._nextEatRequestAt||0)){
+            f._nextEatRequestAt = now + 300;
+            socket.emit('eatItem', { kind:'food', id: f.id });
+          }
+          continue;
+        }
         const ft = FOOD_TYPES[f.type];
         if(ft.maxHp){
           // tough plants (e.g. coconut, wildmelon) must be pecked down before they're collected
@@ -2733,6 +2996,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
         me.stageScore += ft.points;
         me.totalScore += ft.points;
+        const healTrop = HEALING_FOOD[f.type];
+        if(healTrop) me.hp = Math.min(me.maxHp, me.hp + healTrop);
+        if(POISON_SOURCES[f.type]) applyPoison(me, f.type); // e.g. wild orchid poisons whoever eats it
         if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
       }
     }
@@ -2779,11 +3045,18 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         const egg = ostrichEggs[i];
         const d = Math.hypot(me.x - egg.x, me.y - egg.y);
         if(d < me.radius + OSTRICH_EGG_RADIUS + 4){
-          me.stageScore += OSTRICH_EGG_POINTS_EATER;
-          me.totalScore += OSTRICH_EGG_POINTS_EATER;
-          if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
-          ostrichEggs.splice(i, 1);
-          showAbilityToast(t('egg_eaten'));
+          if(usingServerWorld){
+            if(now >= (egg._nextEatRequestAt||0)){
+              egg._nextEatRequestAt = now + 300;
+              socket.emit('eatEgg', { id: egg.id });
+            }
+          } else {
+            me.stageScore += OSTRICH_EGG_POINTS_EATER;
+            me.totalScore += OSTRICH_EGG_POINTS_EATER;
+            if(spec.evoNeed !== null && me.stageScore >= spec.evoNeed) evolve();
+            ostrichEggs.splice(i, 1);
+            showAbilityToast(t('egg_eaten'));
+          }
           break;
         }
       }
@@ -2803,7 +3076,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
       if(pr._carriedByEagle) continue; // held in an eagle's talons — frozen & hidden until dropped
       if(pr.collected){
-        if(now>=pr.respawnAt){
+        if(!usingServerWorld && now>=pr.respawnAt){
           // Check limit for limited spawn creatures
           if(pt.limit && preyLimits[pr.type] >= pt.limit){
             pr.respawnAt = now + 5000; // retry later
@@ -2815,8 +3088,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         continue;
       }
       
-      // Only move mobile prey
-      if(pt.mobile){
+      // Only move mobile prey — the server drives this via preyPositions once connected.
+      if(!usingServerWorld && pt.mobile){
         if(now >= pr.nextTurnAt){
           const angle = Math.random()*Math.PI*2;
           pr.vx = Math.cos(angle); pr.vy = Math.sin(angle);
@@ -2833,23 +3106,40 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(!spec.eats[pr.type]){
         // This prey can hurt us back if we're too weak to eat it — same 1.5s bite cadence as PvP.
         const dmg = DANGEROUS_PREY[pr.type];
-        if(dmg && !me.flying && now > me.invulnUntil && !adminInvulnerable){
+        const poisonInfo = POISON_SOURCES[pr.type];
+        if((dmg || poisonInfo) && !me.flying && now > me.invulnUntil && !adminInvulnerable){
           const d0 = Math.hypot(me.x-pr.x, me.y-pr.y);
           if(d0 < me.radius + pt.size + 4 && now >= (pr.nextBiteAt||0)){
-            pr.nextBiteAt = now + 1500;
-            me.hp -= dmg;
-            me.lastHitAt = now;
-            addDamageIndicator(me.x, me.y, dmg);
-            const kx=(me.x-pr.x)||0.01, ky=(me.y-pr.y)||0.01;
-            const kd=Math.hypot(kx,ky)||1;
-            me.x += (kx/kd)*14; me.y += (ky/kd)*14;
-            if(me.hp <= 0) die();
+            if(usingServerWorld){
+              pr.nextBiteAt = now + 300; // request-throttle only; server owns the real 1500ms cooldown
+              socket.emit('pveBite', { kind:'prey', id: pr.id });
+            } else {
+              pr.nextBiteAt = now + 1500;
+              if(dmg){
+                me.hp -= dmg;
+                addDamageIndicator(me.x, me.y, dmg);
+              }
+              if(poisonInfo) applyPoison(me, pr.type);
+              me.lastHitAt = now;
+              const kx=(me.x-pr.x)||0.01, ky=(me.y-pr.y)||0.01;
+              const kd=Math.hypot(kx,ky)||1;
+              me.x += (kx/kd)*14; me.y += (ky/kd)*14;
+              if(me.hp <= 0) die();
+            }
           }
         }
         continue;
       }
       if(me.flying) continue; // can't hunt ground prey while airborne
       const d = Math.hypot(me.x-pr.x, me.y-pr.y);
+      if(usingServerWorld){
+        // Server owns the pecking-down/collect/respawn state — we just ask it to referee.
+        if(d < me.radius + pt.size + 4 && now >= (pr._nextEatRequestAt||0)){
+          pr._nextEatRequestAt = now + 300;
+          socket.emit('eatItem', { kind:'prey', id: pr.id });
+        }
+        continue;
+      }
       const griffinBonesBuffed = pr.type==='bones' && me.species==='griffin' && now < (me.griffinBonesBuffUntil||0);
       const hitCooldown = griffinBonesBuffed ? 750 : 1500; // griffin's ability: eats bones 2x faster
       if(d < me.radius + pt.size + 4 && now >= pr.nextHitAt){
@@ -2883,29 +3173,31 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       }
     }
 
-    // Dangerous prey damages ostrich eggs
-    for(const pr of prey){
-      if(pr.collected || pr._carriedByEagle) continue;
-      const pt = PREY_TYPES[pr.type];
-      const dmg = DANGEROUS_PREY[pr.type];
-      if(dmg){
-        for(let i = ostrichEggs.length - 1; i >= 0; i--){
-          const egg = ostrichEggs[i];
-          const d = Math.hypot(egg.x - pr.x, egg.y - pr.y);
-          if(d < OSTRICH_EGG_RADIUS + pt.size + 4 && now >= (pr.nextEggBiteAt||0)){
-            pr.nextEggBiteAt = now + 1500;
-            egg.hp -= dmg;
-            addDamageIndicator(egg.x, egg.y, dmg);
-            if(egg.hp <= 0){
-              ostrichEggs.splice(i, 1);
+    // Dangerous prey damages ostrich eggs (server handles this in server-world mode)
+    if(!usingServerWorld){
+      for(const pr of prey){
+        if(pr.collected || pr._carriedByEagle) continue;
+        const pt = PREY_TYPES[pr.type];
+        const dmg = DANGEROUS_PREY[pr.type];
+        if(dmg){
+          for(let i = ostrichEggs.length - 1; i >= 0; i--){
+            const egg = ostrichEggs[i];
+            const d = Math.hypot(egg.x - pr.x, egg.y - pr.y);
+            if(d < OSTRICH_EGG_RADIUS + pt.size + 4 && now >= (pr.nextEggBiteAt||0)){
+              pr.nextEggBiteAt = now + 1500;
+              egg.hp -= dmg;
+              addDamageIndicator(egg.x, egg.y, dmg);
+              if(egg.hp <= 0){
+                ostrichEggs.splice(i, 1);
+              }
             }
           }
         }
       }
     }
 
-    // Ostrich gains points for each uneaten egg every second
-    if(me.species === 'ostrich' && ostrichEggs.length > 0){
+    // Ostrich gains points for each uneaten egg every second (server handles this in server-world mode)
+    if(!usingServerWorld && me.species === 'ostrich' && ostrichEggs.length > 0){
       if(!me.lastEggPointsAt) me.lastEggPointsAt = now;
       const timeSinceLastPoints = now - me.lastEggPointsAt;
       if(timeSinceLastPoints >= 1000){
@@ -3287,9 +3579,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       const px=p.x-camX, py=p.y-camY;
       if(px<-70||py<-70||px>vw+70||py>vh+70) return;
       const sp = SPECIES[p.species]||SPECIES.sparrow;
-      drawJobs.push({ y: p.y, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name+(p.eagleCarrying?' 🦅💢':'')+(me._beingCarriedByEagle && p.eagleCarryKey===(socket&&socket.id)?' 😱':''), false, p.hp, p.maxHp, !!p.flying, !!p.digging, !!p.carryingMeat, !!p.dashActive || !!p.cassowaryDashActive) });
+      drawJobs.push({ y: p.y, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name+(p.eagleCarrying?' 🦅💢':'')+(me._beingCarriedByEagle && p.eagleCarryKey===(socket&&socket.id)?' 😱':''), false, p.hp, p.maxHp, !!p.flying, !!p.digging, !!p.carryingMeat, !!p.dashActive || !!p.cassowaryDashActive, !!p.poisoned) });
     });
-    drawJobs.push({ y: me.y, draw: ()=> drawBird(me.x-camX, me.y-camY, SPECIES[me.species], me.angle, me.name+(me.eagleCarryType?' 🦅💢':'')+(me._beingCarriedByEagle?' 😱':''), true, me.hp, me.maxHp, !!me.flying, !!me.digging, !!me.carryingMeat, !!me.dashActive || !!me.cassowaryDashActive) });
+    drawJobs.push({ y: me.y, draw: ()=> drawBird(me.x-camX, me.y-camY, SPECIES[me.species], me.angle, me.name+(me.eagleCarryType?' 🦅💢':'')+(me._beingCarriedByEagle?' 😱':''), true, me.hp, me.maxHp, !!me.flying, !!me.digging, !!me.carryingMeat, !!me.dashActive || !!me.cassowaryDashActive, !!(me.poisonUntil && me.poisonUntil > Date.now())) });
     drawJobs.sort((a,b)=>a.y-b.y);
     for(const job of drawJobs) job.draw();
 
@@ -3608,7 +3900,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     return;
   }
 
-  function drawBird(x,y,spec,angle,label,isSelf,hp,maxHp,isFlying,isDigging,isCarryingMeat,isDashing){
+  function drawBird(x,y,spec,angle,label,isSelf,hp,maxHp,isFlying,isDigging,isCarryingMeat,isDashing,isPoisoned){
     const key = spec.key;
     const lift = isFlying ? Math.min(28, 12 + spec.radius*0.14) : 0;
     const by = y - lift; // bird's drawn position, lifted when airborne
@@ -3684,6 +3976,23 @@ ctx.rotate(angle - Math.PI / 2);
       
       ctx.globalAlpha = (isFlying) ? 0.5 : (isSelf ? 1.0 : 0.85);
       ctx.drawImage(birdImg, -drawWidth/2, -drawHeight/2, drawWidth, drawHeight);
+      if(isPoisoned){
+        // Purple poison tint, masked to the bird's own drawn pixels, faded into a soft oval
+        // (radial gradient) rather than a hard-edged rectangle.
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-atop';
+        const pulseAlpha = 0.55 + Math.sin(performance.now()/180)*0.15;
+        const rx = drawWidth/2, ry = drawHeight/2;
+        const grad = ctx.createRadialGradient(0,0,0, 0,0, Math.max(rx,ry));
+        grad.addColorStop(0, `rgba(138,43,226,${pulseAlpha})`);
+        grad.addColorStop(0.7, `rgba(138,43,226,${pulseAlpha*0.6})`);
+        grad.addColorStop(1, 'rgba(138,43,226,0)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
       ctx.globalAlpha = 1.0;
     }
     
@@ -3709,7 +4018,7 @@ ctx.rotate(angle - Math.PI / 2);
     ctx.font=(isSelf?'600 ':'500 ')+'12px Inter, sans-serif';
     ctx.textAlign='center';
     ctx.fillStyle= isSelf? '#ECE8DE' : 'rgba(236,232,222,0.78)';
-    ctx.fillText(label + (isFlying?' ✈':'') + (isDigging?' ⛏':'') + (isCarryingMeat?' 🍖':'') + (isDashing?' ⚡':''), x, by-spec.radius-16);
+    ctx.fillText(label + (isFlying?' ✈':'') + (isDigging?' ⛏':'') + (isCarryingMeat?' 🍖':'') + (isDashing?' ⚡':'') + (isPoisoned?' ☠':''), x, by-spec.radius-16);
 
     // hp bar over every bird (self and remote)
     if(typeof hp==='number' && typeof maxHp==='number' && maxHp>0){
