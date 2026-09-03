@@ -22,13 +22,28 @@ const { Server } = require('socket.io');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' } // relax CORS since the client may be hosted separately during development
+  cors: { origin: '*' }, // relax CORS since the client may be hosted separately during development
+  // Force WebSocket only. Without this, Socket.IO will happily fall back to HTTP
+  // long-polling if the WebSocket upgrade fails (e.g. a proxy/host that doesn't
+  // pass it through) — and long-polling adds noticeable latency to *every* single
+  // event (player movement, prey positions, eating), which reads to players as
+  // "everything is delayed". Better to fail the connection loudly than degrade
+  // silently into a laggy fallback. The client must also request 'websocket' only
+  // (see io(..., { transports: ['websocket'] })) or it will still probe polling first.
+  transports: ['websocket'],
+  // Skip per-message deflate compression — it costs CPU on every single emit for
+  // payloads this small (player/prey position updates), which isn't worth it here.
+  perMessageDeflate: false,
 });
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 // socket.id -> player state
 const players = new Map();
+// socket.id -> last time we actually broadcast that player's 'update' to everyone
+// else (see the throttle in socket.on('update') below).
+const lastBroadcastAt = new Map();
+const UPDATE_BROADCAST_MIN_INTERVAL_MS = 40; // caps fan-out at 25/s per player, well above any normal client's send rate
 
 function sanitize(d) {
   d = d || {};
@@ -313,6 +328,14 @@ function resolveEat(player, kind, id) {
 function tickWorldMovement(dtMs) {
   const now = Date.now();
   const dt = dtMs / 1000;
+  // Collect the prey that actually moved this tick so we can broadcast their
+  // fresh x/y *and* vx/vy together, right away — instead of a separate, lower-rate
+  // timer re-reading whatever vx/vy happens to be sitting on the object later.
+  // That old setup was the root cause of prey visually "moving sideways": the
+  // random direction change below could happen several ticks before a client
+  // ever heard about the new vx/vy, so a client rotating a sprite from vx/vy
+  // would show it facing stale directions while x/y kept moving correctly.
+  const moved = [];
   for (const pr of prey) {
     if (pr.collected) { if (now >= pr.respawnAt) respawnPrey(pr); continue; }
     const pt = PREY_TYPES[pr.type];
@@ -328,18 +351,17 @@ function tickWorldMovement(dtMs) {
     if (nx < 0 || nx > MAP_W) { pr.vx *= -1; nx = Math.max(0, Math.min(MAP_W, nx)); }
     if (ny < b.yStart || ny > b.yEnd) { pr.vy *= -1; ny = Math.max(b.yStart, Math.min(b.yEnd, ny)); }
     pr.x = nx; pr.y = ny;
+    moved.push({ id: pr.id, x: pr.x, y: pr.y, vx: pr.vx, vy: pr.vy });
   }
   for (const f of food) {
     if (f.collected && now >= f.respawnAt) respawnFood(f);
   }
+  // Broadcast on the very same tick the positions were computed on — this also
+  // halves the old worst-case broadcast latency (100ms tick vs the previous
+  // 200ms timer that ran independently of the movement calc).
+  if (moved.length) io.emit('preyPositions', moved);
 }
 setInterval(() => tickWorldMovement(100), 100);
-// Moving prey get a lightweight, low-rate position broadcast; collection/respawn
-// events are already broadcast immediately (in full) wherever they happen above.
-setInterval(() => {
-  const moving = prey.filter(pr => !pr.collected && PREY_TYPES[pr.type].mobile).map(pr => ({ id: pr.id, x: pr.x, y: pr.y }));
-  if (moving.length) io.emit('preyPositions', moving);
-}, 200);
 
 // ---------------- Ostrich eggs & Phoenix fire trail (server-authoritative) ----------------
 // PHASE 6. Both of these were 100% client-local arrays before this — an ostrich's eggs and
@@ -708,10 +730,18 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('playerUpdate', { id: socket.id, ...p });
   });
 
+  // Caps how often we FAN OUT a given player's movement to everyone else — not how
+  // often we accept it. `players.set()` below always runs at full rate so distance
+  // checks elsewhere (eating, PvP, abilities) stay accurate; only the O(n) broadcast
+  // to every other connected socket is capped, since that's what turns into O(n²)
+  // total traffic as the player count grows.
   socket.on('update', (data) => {
     if (!players.has(socket.id)) return; // must join first
     const p = sanitize(data);
     players.set(socket.id, p);
+    const now = Date.now();
+    if (now - (lastBroadcastAt.get(socket.id) || 0) < UPDATE_BROADCAST_MIN_INTERVAL_MS) return;
+    lastBroadcastAt.set(socket.id, now);
     socket.broadcast.emit('playerUpdate', { id: socket.id, ...p });
   });
 
@@ -869,6 +899,7 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect', () => {
     players.delete(socket.id);
+    lastBroadcastAt.delete(socket.id);
     clearPvpCooldownsFor(socket.id);
     clearPveCooldownsFor(socket.id);
     clearAbilityHitLogFor(socket.id);
@@ -876,6 +907,18 @@ io.on('connection', (socket) => {
     console.log('[-] disconnected', socket.id);
   });
 });
+
+// pvpCooldowns/pveCooldowns entries are just "next allowed timestamp" values that
+// are useless once that timestamp has passed — clearPvpCooldownsFor/clearPveCooldownsFor
+// only run per-player on disconnect, so on a long-running server with players who
+// stay connected for hours these would otherwise just keep accumulating stale
+// already-expired entries (a slow memory creep, and slightly more work for every
+// future cooldown lookup). Sweep them out periodically instead.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, nextAllowed] of pvpCooldowns) if (now >= nextAllowed) pvpCooldowns.delete(key);
+  for (const [key, nextAllowed] of pveCooldowns) if (now >= nextAllowed) pveCooldowns.delete(key);
+}, 60000);
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {

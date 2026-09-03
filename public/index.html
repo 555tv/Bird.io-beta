@@ -1631,8 +1631,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   function mergePreyUpdate(item){
     const pr = prey.find(p=>p.id===item.id);
     if(!pr) return;
+    const respawning = pr.collected && !item.collected;
     pr.x = item.x; pr.y = item.y; pr.vx = item.vx||0; pr.vy = item.vy||0;
     pr.collected = !!item.collected; pr.respawnAt = item.respawnAt||0; pr.hp = item.hp;
+    if(respawning){
+      // Respawn teleports the prey to a brand-new spot on the map — snap the
+      // smoothed render position too, instead of letting it visibly slide
+      // there from wherever it was last eaten (see render()'s _rx/_ry smoothing).
+      pr._rx = pr.x; pr._ry = pr.y;
+    }
   }
 
   function updateConnText(){
@@ -1667,7 +1674,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       connText.textContent = t('conn_offline');
       return;
     }
-    socket = io(); // connects back to the same origin that served this page
+    // websocket-only, matching the server's `transports: ['websocket']` — skips the
+    // slower long-polling probe/upgrade dance and avoids ever silently degrading to it.
+    socket = io({ transports: ['websocket'] }); // connects back to the same origin that served this page
     socket.on('connect', ()=>{
       socketConnected = true;
       socket.emit('join', currentSnapshot());
@@ -1691,7 +1700,12 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     socket.on('playerUpdate', (msg)=>{
       if(msg.id === socket.id) return;
       const { id, ...data } = msg;
-      otherPlayers.set(id, data);
+      // Merge in place (not otherPlayers.set(id, data)) so client-only fields —
+      // like the _rx/_ry render-smoothing position — survive across updates
+      // instead of getting wiped out on every single network packet.
+      const existing = otherPlayers.get(id);
+      if(existing) Object.assign(existing, data);
+      else otherPlayers.set(id, data);
       updateConnText();
     });
     socket.on('playerLeft', (id)=>{
@@ -1720,7 +1734,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       if(!usingServerWorld || !Array.isArray(list)) return;
       for(const upd of list){
         const pr = prey.find(p=>p.id===upd.id);
-        if(pr){ pr.x = upd.x; pr.y = upd.y; }
+        if(pr){
+          pr.x = upd.x; pr.y = upd.y;
+          // Server now sends the current heading with every position update
+          // (previously only x/y — the sprite kept rotating to a stale
+          // direction from the last full preyUpdate, which is why prey looked
+          // like they were moving sideways/crab-walking).
+          if(upd.vx !== undefined) pr.vx = upd.vx;
+          if(upd.vy !== undefined) pr.vy = upd.vy;
+        }
       }
     });
     // Ostrich eggs & phoenix flame trail (Phase 6): these used to be 100% local arrays —
@@ -2465,7 +2487,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   function loop(now){
     const dt = Math.min(0.05,(now-last)/1000); last=now;
     update(dt);
-    render();
+    render(dt);
     requestAnimationFrame(loop);
   }
 
@@ -2942,6 +2964,18 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
           if(now >= (f._nextEatRequestAt||0)){
             f._nextEatRequestAt = now + 300;
             socket.emit('eatItem', { kind:'food', id: f.id });
+            const ft = FOOD_TYPES[f.type];
+            if(!ft.maxHp){
+              // Optimistic prediction: single-bite food is (almost) always eaten
+              // successfully, so hide it right away instead of waiting a full
+              // network round-trip for the server's 'foodUpdate' broadcast.
+              // Score/heal/evolve still only apply once the server confirms via
+              // 'eatResult' (see socket.on('eatResult')) — the next real
+              // 'foodUpdate' for this id (from this eat, or a later respawn)
+              // will correct this guess either way, so it's safe if wrong.
+              f.collected = true;
+              f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
+            }
           }
           continue;
         }
@@ -2979,6 +3013,13 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
           if(now >= (f._nextEatRequestAt||0)){
             f._nextEatRequestAt = now + 300;
             socket.emit('eatItem', { kind:'food', id: f.id });
+            const ft = FOOD_TYPES[f.type];
+            if(!ft.maxHp){
+              // Same optimistic prediction as the main food loop — see the
+              // comment there for why this is safe even when the guess is wrong.
+              f.collected = true;
+              f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
+            }
           }
           continue;
         }
@@ -3380,7 +3421,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
   function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
-  function render(){
+  function render(dt){
     if(!me) return;
     const W=canvas.width, H=canvas.height;
     ctx.clearRect(0,0,W,H);
@@ -3567,19 +3608,33 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     }
 
     // ---------------- Y-sorted pass: prey + birds, so nothing gets permanently stuck underneath the player ----------------
+    // Prey (~every 100ms) and other players (~every 120ms) only get NEW authoritative
+    // x/y this often over the network. Drawing straight from pr.x/p.x makes them visibly
+    // snap/teleport between updates. We keep pr.x/p.x as the true, immediately-usable
+    // position for all game logic (distance checks, eating, collisions, etc. elsewhere
+    // in the file) and only smooth a separate _rx/_ry pair used purely for rendering.
+    const posSmoothK = 1 - Math.exp(-(dt||0.016) / 0.09); // ~90ms time constant, frame-rate independent
+    for(const pr of prey){
+      if(pr._rx === undefined){ pr._rx = pr.x; pr._ry = pr.y; }
+      else { pr._rx += (pr.x - pr._rx) * posSmoothK; pr._ry += (pr.y - pr._ry) * posSmoothK; }
+    }
+    otherPlayers.forEach(p=>{
+      if(p._rx === undefined){ p._rx = p.x; p._ry = p.y; }
+      else { p._rx += (p.x - p._rx) * posSmoothK; p._ry += (p.y - p._ry) * posSmoothK; }
+    });
     const drawJobs = [];
     for(const pr of prey){
       if(pr.collected || pr._carriedByEagle) continue;
       if(!preyAllowedInSeason(pr.type, seasonInfo.key)) continue;
-      const px=pr.x-camX, py=pr.y-camY;
+      const px=pr._rx-camX, py=pr._ry-camY;
       if(px<-30||py<-30||px>vw+30||py>vh+30) continue;
-      drawJobs.push({ y: pr.y, draw: ()=> drawPrey(px,py,pr) });
+      drawJobs.push({ y: pr._ry, draw: ()=> drawPrey(px,py,pr) });
     }
     otherPlayers.forEach(p=>{
-      const px=p.x-camX, py=p.y-camY;
+      const px=p._rx-camX, py=p._ry-camY;
       if(px<-70||py<-70||px>vw+70||py>vh+70) return;
       const sp = SPECIES[p.species]||SPECIES.sparrow;
-      drawJobs.push({ y: p.y, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name+(p.eagleCarrying?' 🦅💢':'')+(me._beingCarriedByEagle && p.eagleCarryKey===(socket&&socket.id)?' 😱':''), false, p.hp, p.maxHp, !!p.flying, !!p.digging, !!p.carryingMeat, !!p.dashActive || !!p.cassowaryDashActive, !!p.poisoned) });
+      drawJobs.push({ y: p._ry, draw: ()=> drawBird(px,py, sp, p.angle||0, p.name+' · '+sp.name+(p.eagleCarrying?' 🦅💢':'')+(me._beingCarriedByEagle && p.eagleCarryKey===(socket&&socket.id)?' 😱':''), false, p.hp, p.maxHp, !!p.flying, !!p.digging, !!p.carryingMeat, !!p.dashActive || !!p.cassowaryDashActive, !!p.poisoned) });
     });
     drawJobs.push({ y: me.y, draw: ()=> drawBird(me.x-camX, me.y-camY, SPECIES[me.species], me.angle, me.name+(me.eagleCarryType?' 🦅💢':'')+(me._beingCarriedByEagle?' 😱':''), true, me.hp, me.maxHp, !!me.flying, !!me.digging, !!me.carryingMeat, !!me.dashActive || !!me.cassowaryDashActive, !!(me.poisonUntil && me.poisonUntil > Date.now())) });
     drawJobs.sort((a,b)=>a.y-b.y);
