@@ -70,19 +70,19 @@ const PVP_ORDER = [
   'eagle', 'griffin', 'blackgoose', 'ostrich', 'cassowary', 'phoenix',
 ];
 const PVP_SPECIES = {
-  sparrow:    { radius: 15,  attack: 0 },
-  pigeon:     { radius: 23,  attack: 20 },
-  crow:       { radius: 32,  attack: 50 },
-  stork:      { radius: 42,  attack: 100 },
-  owl:        { radius: 52,  attack: 180 },
-  hawk:       { radius: 64,  attack: 350 },
-  pelican:    { radius: 70,  attack: 550 },
-  eagle:      { radius: 78,  attack: 850 },
-  griffin:    { radius: 86,  attack: 1500 },
-  blackgoose: { radius: 94,  attack: 2500 },
-  ostrich:    { radius: 102, attack: 3850 },
-  cassowary:  { radius: 110, attack: 5600 },
-  phoenix:    { radius: 118, attack: 8900 },
+  sparrow:    { radius: 16,  attack: 0 },
+  pigeon:     { radius: 24,  attack: 20 },
+  crow:       { radius: 34,  attack: 50 },
+  stork:      { radius: 48,  attack: 85 },
+  owl:        { radius: 54,  attack: 160 },
+  hawk:       { radius: 69,  attack: 225 },
+  pelican:    { radius: 80,  attack: 285 },
+  eagle:      { radius: 86,  attack: 360 },
+  griffin:    { radius: 90,  attack: 440 },
+  blackgoose: { radius: 98,  attack: 500 },
+  ostrich:    { radius: 107, attack: 650 },
+  cassowary:  { radius: 116, attack: 750 },
+  phoenix:    { radius: 124, attack: 950 },
 };
 const PVP_HIT_RANGE_MULT = 0.75; // matches the client's `me.radius + oSpec.radius*0.75` reach
 const PVP_HIT_COOLDOWN = 1500;   // ms, matches the client's old per-target cooldown
