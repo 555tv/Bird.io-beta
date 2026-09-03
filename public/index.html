@@ -2966,15 +2966,16 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
             socket.emit('eatItem', { kind:'food', id: f.id });
             const ft = FOOD_TYPES[f.type];
             if(!ft.maxHp){
-              // Optimistic prediction: single-bite food is (almost) always eaten
-              // successfully, so hide it right away instead of waiting a full
-              // network round-trip for the server's 'foodUpdate' broadcast.
-              // Score/heal/evolve still only apply once the server confirms via
-              // 'eatResult' (see socket.on('eatResult')) — the next real
-              // 'foodUpdate' for this id (from this eat, or a later respawn)
-              // will correct this guess either way, so it's safe if wrong.
-              f.collected = true;
-              f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
+              // Optimistic prediction: hide it right away for rendering purposes
+              // only, instead of waiting a full network round-trip. Crucially this
+              // must NOT touch f.collected — that flag also gates whether we keep
+              // retrying below, and the server's own copy of our position can lag
+              // a bit behind the client's, so the very first attempt often gets
+              // rejected. Setting f.collected here silently killed the retry loop,
+              // which is why eating stopped awarding points. _predictedHidden is
+              // purely cosmetic and self-expires if the server never confirms.
+              f._predictedHidden = true;
+              f._predictedHiddenAt = now;
             }
           }
           continue;
@@ -3015,10 +3016,9 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
             socket.emit('eatItem', { kind:'food', id: f.id });
             const ft = FOOD_TYPES[f.type];
             if(!ft.maxHp){
-              // Same optimistic prediction as the main food loop — see the
-              // comment there for why this is safe even when the guess is wrong.
-              f.collected = true;
-              f.respawnAt = now + 3500 + Math.random()*2500 + ft.points*40;
+              // Same fix as the main food loop — see the comment there.
+              f._predictedHidden = true;
+              f._predictedHiddenAt = now;
             }
           }
           continue;
@@ -3508,6 +3508,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     for(const f of food){
       if(f.collected) continue;
+      if(f._predictedHidden){
+        if(now - f._predictedHiddenAt < 900) continue; // still waiting on server confirmation
+        f._predictedHidden = false; // gave up waiting — reveal it again, it's evidently still here
+      }
       if(!foodAllowedInSeason(f.type, seasonInfo.key)) continue;
       const fx=f.x-camX, fy=f.y-camY;
       if(fx<-20||fy<-20||fx>vw+20||fy>vh+20) continue;
@@ -3518,6 +3522,10 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     // tropical food drawing
     for(const f of tropicalFood){
       if(f.collected) continue;
+      if(f._predictedHidden){
+        if(now - f._predictedHiddenAt < 900) continue;
+        f._predictedHidden = false;
+      }
       const fx=f.x-camX, fy=f.y-camY;
       if(fx<-20||fy<-20||fx>vw+20||fy>vh+20) continue;
       const bob = Math.sin(t+f.phase)*2;
