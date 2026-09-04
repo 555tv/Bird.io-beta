@@ -306,6 +306,7 @@
 
     <div id="updatesPanel" class="panel">
       <h4 data-i18n="updates_title">Обновления</h4>
+     <div class="upd"><div class="date">04.09</div><div class="text" data-i18n="update13">Пофикшен баг с едой, которая не давала опыта</div></div>
      <div class="upd"><div class="date">03.09</div><div class="text" data-i18n="update12">Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков</div></div>
       <div class="upd"><div class="date">02.09</div><div class="text" data-i18n="update11">Глобальное изменение баланса: изенены значения хп-урона у птиц (включительно со способностями) и nps</div></div>
       <div class="upd"><div class="date">01.09</div><div class="text" data-i18n="update10">Добавлены новые животные в тропический биом</div></div>
@@ -485,6 +486,7 @@ const I18N = {
     update9:'Переделана механика NPC зомби и мумии',
     update10:'Добавлены новые животные в тропический биом',
     update11:'Глобальное изменение баланса: изенены значения хп-урона у птиц (включительно со способностями) и nps',
+    update13:'Пофикшен баг с едой, которая не давала опыта',
     update12:'Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков',
     support_title_attr:'Поддержать проект',
     howtoplay_btn:'Как играть',
@@ -650,6 +652,7 @@ const I18N = {
     update9:'Reworked zombie and mummy NPC mechanics',
     update10:'Added new animals to the tropical biome',
     update11:'Global balance change: adjusted HP damage values for birds (including abilities) and NPCs',
+    update13:'Fixed a bug where eating food did not grant XP',
     update12:'Global game update: core game logic moved to the server to avoid local rendering discrepancies and help synchronize map resources across all players',
     support_title_attr:'Support the project',
     howtoplay_btn:'How to Play',
@@ -1624,7 +1627,14 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   function mergeFoodUpdate(item){
     let f = food.find(x=>x.id===item.id);
     if(!f) f = tropicalFood.find(x=>x.id===item.id);
-    if(!f) return;
+    if(!f){
+      // Unknown id: this is a brand-new item the server just created (e.g. pigeon dig /
+      // crow meat-shatter), not an update to one we already know about — add it instead
+      // of dropping it, or it would sit on the server forever invisible to this client.
+      const created = serverFoodToClient(item);
+      if(item.biome === 'tropical') tropicalFood.push(created); else food.push(created);
+      return;
+    }
     f.x = item.x; f.y = item.y; f.collected = !!item.collected;
     f.respawnAt = item.respawnAt||0; f.hp = item.hp||0;
   }
@@ -2173,20 +2183,34 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
   function finishDigging(){
     me.digging = false;
-    const count = 1 + Math.floor(Math.random()*4); // 1-4 bread
-    for(let i=0;i<count;i++){
-      const a = Math.random()*Math.PI*2;
-      const r = 20 + Math.random()*46;
-      food.push(spawnFoodAt('bread', me.x + Math.cos(a)*r, me.y + Math.sin(a)*r));
+    // Cosmetic only — the actual spawned count is decided server-side now (see below),
+    // this is just a plausible number for the toast text.
+    const displayCount = 1 + Math.floor(Math.random()*4);
+    if(usingServerWorld){
+      // Server owns the spawn now so the resulting bread has a real id the server's
+      // own eatItem referee can actually find — see server.js's 'pigeonDig' handler.
+      socket.emit('pigeonDig');
+    } else {
+      for(let i=0;i<displayCount;i++){
+        const a = Math.random()*Math.PI*2;
+        const r = 20 + Math.random()*46;
+        food.push(spawnFoodAt('bread', me.x + Math.cos(a)*r, me.y + Math.sin(a)*r));
+      }
     }
-    showAbilityToast(t('pigeon_dug',{count}));
+    showAbilityToast(t('pigeon_dug',{count: displayCount}));
   }
 
   function shatterMeatIntoApples(x,y){
-    for(let i=0;i<5;i++){
-      const a = (Math.PI*2*i/5) + Math.random()*0.5;
-      const r = 26 + Math.random()*34;
-      food.push(spawnFoodAt('apple', x + Math.cos(a)*r, y + Math.sin(a)*r));
+    if(usingServerWorld){
+      // Server owns the spawn now so the resulting apples have real ids the server's
+      // own eatItem referee can actually find — see server.js's 'crowShatterMeat' handler.
+      socket.emit('crowShatterMeat');
+    } else {
+      for(let i=0;i<5;i++){
+        const a = (Math.PI*2*i/5) + Math.random()*0.5;
+        const r = 26 + Math.random()*34;
+        food.push(spawnFoodAt('apple', x + Math.cos(a)*r, y + Math.sin(a)*r));
+      }
     }
     showAbilityToast(t('meat_scattered'));
   }

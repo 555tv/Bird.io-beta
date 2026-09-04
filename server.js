@@ -164,6 +164,7 @@ const MAP_W = 3200, MAP_H = 3200 * 9;
 const BIOME_MAIN = { yStart: 0, yEnd: 19200 };
 const BIOME_TROPICAL = { yStart: 19200, yEnd: 28800 };
 function biomeBounds(name) { return name === 'tropical' ? BIOME_TROPICAL : BIOME_MAIN; }
+function biomeAtY(y) { return (y >= BIOME_TROPICAL.yStart && y < BIOME_TROPICAL.yEnd) ? 'tropical' : 'main'; }
 
 // Mirrors the client's FOOD_TYPES (size for eat-distance checks, points for
 // score/respawn timing, maxHp for the "tough plants must be pecked down" mechanic).
@@ -243,6 +244,20 @@ function spawnFoodItem(type, biome) {
   return {
     id: 'f' + (foodSeq++), type, biome,
     x: Math.random() * MAP_W, y: b.yStart + Math.random() * (b.yEnd - b.yStart),
+    collected: false, respawnAt: 0, hp: ft.maxHp || 0, nextHitAt: 0,
+  };
+}
+// Same as spawnFoodItem but at a fixed point instead of a random one — used when an
+// ability (pigeon dig, crow's meat-shatter-on-takeoff) drops food where a player
+// currently is, instead of the world's normal random distribution.
+function spawnFoodItemAt(type, x, y) {
+  const cx = Math.max(0, Math.min(MAP_W, x));
+  const cy = Math.max(0, Math.min(MAP_H, y));
+  const biome = biomeAtY(cy);
+  const ft = FOOD_TYPES[type];
+  return {
+    id: 'f' + (foodSeq++), type, biome,
+    x: cx, y: cy,
     collected: false, respawnAt: 0, hp: ft.maxHp || 0, nextHitAt: 0,
   };
 }
@@ -523,6 +538,17 @@ const PVE_HIT_COOLDOWN = 1500; // ms, matches the client's old per-item bite cad
 // `${playerId}>${kind}:${itemId}` -> next time (ms) that player is allowed to be bitten by that item again
 const pveCooldowns = new Map();
 
+// Ability-driven food spawns (pigeon dig -> bread, crow meat-shatter -> apples) used to be
+// 100% client-local: the client pushed the new item straight into its own `food` array with
+// a locally-generated id that the server never heard about. That meant the server's own
+// eatItem referee (resolveEat) could never find that id, so eating what you just spawned
+// silently failed every time — the item just sat there, invisible to `food.find(...)`, forever
+// re-appearing once the client's optimistic "hide" prediction expired. Now the server owns the
+// spawn (so it gets a real 'f...' id everyone including the requester can actually eat) — this
+// cooldown map just stops a modified client from spamming the map with free food.
+// `${playerId}:${kind}` -> next time (ms) that player is allowed to trigger that spawn again
+const abilitySpawnCooldowns = new Map();
+
 // Referees one "something dangerous just touched me" attempt. Re-checks flying/invuln/species/
 // distance/cooldown server-side using its own stored copies before applying any damage — the
 // reporting client is only ever trusted to say *what* touched it, not the damage or outcome.
@@ -581,6 +607,11 @@ function resolvePveBite(playerId, kind, id) {
 function clearPveCooldownsFor(id) {
   for (const key of pveCooldowns.keys()) {
     if (key.startsWith(id + '>')) pveCooldowns.delete(key);
+  }
+}
+function clearAbilitySpawnCooldownsFor(id) {
+  for (const key of abilitySpawnCooldowns.keys()) {
+    if (key.startsWith(id + ':')) abilitySpawnCooldowns.delete(key);
   }
 }
 
@@ -805,6 +836,49 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Pigeon's dig ability: drops 1-4 bread around the pigeon once its dig animation
+  // finishes (the client tells us only when digging completed — timing/cooldown UI stays
+  // client-side, this just makes the resulting food a real, eatable, server-owned item).
+  // 16000ms mirrors the client's ABILITY_COOLDOWN.pigeon; only guards against a modified
+  // client spamming this event, since the client's own cooldown already paces normal play.
+  socket.on('pigeonDig', () => {
+    const player = players.get(socket.id);
+    if (!player || player.species !== 'pigeon') return;
+    const now = Date.now();
+    const cdKey = socket.id + ':pigeonDig';
+    if (now < (abilitySpawnCooldowns.get(cdKey) || 0)) return;
+    abilitySpawnCooldowns.set(cdKey, now + 16000);
+
+    const count = 1 + Math.floor(Math.random() * 4);
+    for (let i = 0; i < count; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = 20 + Math.random() * 46;
+      const item = spawnFoodItemAt('bread', player.x + Math.cos(a) * r, player.y + Math.sin(a) * r);
+      food.push(item);
+      io.emit('foodUpdate', item);
+    }
+  });
+
+  // Crow's ability payoff: meat carried in the beak shatters into 5 apples the instant the
+  // crow takes off. Same reasoning as pigeonDig above — server owns the spawn so it's a real,
+  // eatable item. 15000ms mirrors the client's ABILITY_COOLDOWN.crow.
+  socket.on('crowShatterMeat', () => {
+    const player = players.get(socket.id);
+    if (!player || player.species !== 'crow') return;
+    const now = Date.now();
+    const cdKey = socket.id + ':crowShatterMeat';
+    if (now < (abilitySpawnCooldowns.get(cdKey) || 0)) return;
+    abilitySpawnCooldowns.set(cdKey, now + 15000);
+
+    for (let i = 0; i < 5; i++) {
+      const a = (Math.PI * 2 * i / 5) + Math.random() * 0.5;
+      const r = 26 + Math.random() * 34;
+      const item = spawnFoodItemAt('apple', player.x + Math.cos(a) * r, player.y + Math.sin(a) * r);
+      food.push(item);
+      io.emit('foodUpdate', item);
+    }
+  });
+
   // A player reporting that dangerous prey/food/fire just touched them asks the server to
   // referee the hit. Same trust model as pvpHit/eatItem — the server independently
   // re-checks distance, cooldown and whether this bird can even be hurt by it.
@@ -903,6 +977,7 @@ io.on('connection', (socket) => {
     clearPvpCooldownsFor(socket.id);
     clearPveCooldownsFor(socket.id);
     clearAbilityHitLogFor(socket.id);
+    clearAbilitySpawnCooldownsFor(socket.id);
     io.emit('playerLeft', socket.id);
     console.log('[-] disconnected', socket.id);
   });
@@ -918,6 +993,7 @@ setInterval(() => {
   const now = Date.now();
   for (const [key, nextAllowed] of pvpCooldowns) if (now >= nextAllowed) pvpCooldowns.delete(key);
   for (const [key, nextAllowed] of pveCooldowns) if (now >= nextAllowed) pveCooldowns.delete(key);
+  for (const [key, nextAllowed] of abilitySpawnCooldowns) if (now >= nextAllowed) abilitySpawnCooldowns.delete(key);
 }, 60000);
 
 const PORT = process.env.PORT || 3000;
