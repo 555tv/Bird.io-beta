@@ -290,6 +290,72 @@ function initWorld() {
 }
 initWorld();
 
+// ---------------- Fruit trees (server-authoritative) ----------------
+// Trees are now part of the shared world layout, same idea as food/prey above: generated
+// once here at startup so every connected client sees the exact same tree positions,
+// instead of each client rolling its own random layout locally. Mirrors the client's
+// TREE_DEFS table (fruit type, how many fruit slots the tree holds, its own respawn
+// delay, its footprint radius, and which biome it belongs to).
+const TREE_DEFS = {
+  appletree:        { fruit: 'apple',        maxFruits: 7,  respawn: 8000,  radius: 146, biome: 'main',     count: 12 },
+  bananatree:       { fruit: 'banana',       maxFruits: 6,  respawn: 10000, radius: 150, biome: 'tropical', count: 5 },
+  mangotree:        { fruit: 'mango',        maxFruits: 6,  respawn: 13000, radius: 153, biome: 'tropical', count: 4 },
+  redcurrantbush:   { fruit: 'redcurrant',   maxFruits: 14, respawn: 15000, radius: 90,  biome: 'tropical', count: 8 },
+  passionfruittree: { fruit: 'passionfruit', maxFruits: 4,  respawn: 28000, radius: 153, biome: 'tropical', count: 3 },
+  coconuttree:      { fruit: 'coconut',      maxFruits: 6,  respawn: 25000, radius: 150, biome: 'tropical', count: 4 },
+  dragonfruittree:  { fruit: 'dragonfruit',  maxFruits: 7,  respawn: 17000, radius: 154, biome: 'tropical', count: 4 },
+  orchidtree:       { fruit: 'wildorchid',   maxFruits: 1,  respawn: 31000, radius: 150, biome: 'tropical', count: 4 },
+};
+
+let trees = [];
+let treeSeq = 0;
+let treeFruits = [];
+let treeFruitSeq = 0;
+
+function spawnTreeFruitAt(tree) {
+  const def = TREE_DEFS[tree.kind];
+  const ft = FOOD_TYPES[def.fruit];
+  const ang = Math.random() * Math.PI * 2;
+  const dist = tree.radius * (0.35 + Math.random() * 0.5);
+  return {
+    id: 'tf' + (treeFruitSeq++), type: def.fruit, biome: tree.biome, treeId: tree.id,
+    x: tree.x + Math.cos(ang) * dist, y: tree.y + Math.sin(ang) * dist,
+    collected: false, respawnAt: 0, hp: (ft && ft.maxHp) || 0, nextHitAt: 0,
+  };
+}
+function spawnTree(kind, x, y) {
+  const def = TREE_DEFS[kind];
+  const tree = { id: treeSeq++, kind, x, y, radius: def.radius, biome: def.biome };
+  trees.push(tree);
+  for (let i = 0; i < def.maxFruits; i++) treeFruits.push(spawnTreeFruitAt(tree));
+  return tree;
+}
+function isTreeOverlapping(candidate) {
+  for (const existing of trees) {
+    const d = Math.hypot(candidate.x - existing.x, candidate.y - existing.y);
+    if (d < candidate.radius + existing.radius + 30) return true; // 30px minimum spacing, matches the client
+  }
+  return false;
+}
+function initTreesOfKind(kind) {
+  const def = TREE_DEFS[kind];
+  const b = biomeBounds(def.biome);
+  for (let i = 0; i < def.count; i++) {
+    let x, y, candidate, attempts = 0;
+    do {
+      x = Math.random() * MAP_W;
+      y = b.yStart + Math.random() * (b.yEnd - b.yStart);
+      candidate = { x, y, radius: def.radius };
+      attempts++;
+    } while (isTreeOverlapping(candidate) && attempts < 20);
+    if (attempts < 20) spawnTree(kind, x, y);
+  }
+}
+function initTrees() {
+  for (const kind of Object.keys(TREE_DEFS)) initTreesOfKind(kind);
+}
+initTrees();
+
 function respawnFood(f) {
   const b = biomeBounds(f.biome);
   const ft = FOOD_TYPES[f.type];
@@ -305,6 +371,14 @@ function respawnPrey(pr) {
   pr.vx = pt.mobile ? Math.cos(angle) : 0; pr.vy = pt.mobile ? Math.sin(angle) : 0;
   pr.hp = pt.maxHp; pr.collected = false; pr.respawnAt = 0;
   io.emit('preyUpdate', pr);
+}
+// Tree fruit respawns in a fresh spot on the SAME tree it grew on (unlike food/prey,
+// which respawn anywhere in their biome), using that tree kind's own respawn delay.
+function respawnTreeFruit(f) {
+  const tree = trees.find(t => t.id === f.treeId);
+  if (!tree) return;
+  Object.assign(f, spawnTreeFruitAt(tree), { id: f.id, treeId: tree.id });
+  io.emit('treeFruitUpdate', f);
 }
 
 // Referees one "I'm trying to eat this" attempt. Re-checks species-can-eat and
@@ -329,7 +403,19 @@ function resolveEat(player, kind, id) {
     item.nextHitAt = now + 1500;
     if (item.hp == null) item.hp = info.maxHp;
     item.hp -= (spec.attack || info.maxHp);
-    if (item.hp > 0) return { partial: true, item };
+    if (item.hp > 0) {
+      // Prey that survives a peck flees from whoever bit it instead of wandering
+      // randomly — mirrors the old client-only behavior, now driven authoritatively
+      // here so it's the same for every connected player, not just the attacker.
+      if (kind === 'prey' && info.mobile) {
+        const fdx = item.x - player.x, fdy = item.y - player.y;
+        const fd = Math.hypot(fdx, fdy) || 1;
+        item.vx = fdx / fd; item.vy = fdy / fd;
+        item.fleeUntil = now + 1100;
+        item.nextTurnAt = now + 1100; // hold this heading until the flee window ends
+      }
+      return { partial: true, item };
+    }
   }
 
   item.collected = true;
@@ -338,6 +424,54 @@ function resolveEat(player, kind, id) {
     : 5000 + Math.random() * 3000 + info.points * 3);
   item.respawnAt = now + baseRespawn;
   return { partial: false, item, points: info.points, type: item.type };
+}
+
+// Same referee as resolveEat above, but for tree fruit: it lives in its own `treeFruits`
+// array and respawns on its own tree (via respawnTreeFruit) instead of anywhere in the biome.
+function resolveEatTreeFruit(player, id) {
+  const item = treeFruits.find(it => it.id === id);
+  if (!item || item.collected) return null;
+  const info = FOOD_TYPES[item.type];
+  if (!info || !canEat(player.species, item.type)) return null;
+
+  const spec = PVP_SPECIES[player.species] || PVP_SPECIES.sparrow;
+  const dist = Math.hypot(player.x - item.x, player.y - item.y);
+  if (dist > spec.radius + info.size + 4) return null;
+
+  const now = Date.now();
+  if (info.maxHp) {
+    if (now < (item.nextHitAt || 0)) return null;
+    item.nextHitAt = now + 1500;
+    if (item.hp == null) item.hp = info.maxHp;
+    item.hp -= (spec.attack || info.maxHp);
+    if (item.hp > 0) return { partial: true, item };
+  }
+
+  item.collected = true;
+  const tree = trees.find(t => t.id === item.treeId);
+  const def = tree ? TREE_DEFS[tree.kind] : null;
+  item.respawnAt = now + (def ? def.respawn : 8000);
+  return { partial: false, item, points: info.points, type: item.type };
+}
+
+// How far a dangerous NPC will spot and start chasing a player it can hurt — mirrors
+// the client's old (local-only) PREY_AGGRO_RANGE, now applied here so every player
+// sees the same NPC either charging at them or peacefully wandering, not just whoever
+// happens to be closest on their own screen.
+const PREY_AGGRO_RANGE = 320;
+
+// Finds the nearest grounded player this prey is dangerous to (and that can't eat it)
+// within aggro range, so it can chase them. Returns null if nothing qualifies.
+function findAggroTarget(pr) {
+  if (!(DANGEROUS_PREY[pr.type] || POISON_SOURCES[pr.type])) return null;
+  let best = null, bestDist = PREY_AGGRO_RANGE;
+  for (const player of players.values()) {
+    if (player.flying) continue;
+    if (canEat(player.species, pr.type)) continue; // not a threat to a bird that can eat it
+    const d = Math.hypot(player.x - pr.x, player.y - pr.y);
+    if (d < bestDist) { bestDist = d; best = player; }
+  }
+  return best;
 }
 
 function tickWorldMovement(dtMs) {
@@ -355,21 +489,71 @@ function tickWorldMovement(dtMs) {
     if (pr.collected) { if (now >= pr.respawnAt) respawnPrey(pr); continue; }
     const pt = PREY_TYPES[pr.type];
     if (!pt.mobile) continue;
-    if (now >= (pr.nextTurnAt || 0)) {
+
+    // Dangerous NPCs that can hurt a player (and that player can't eat) spot them
+    // within range and chase to bite — same behavior for every connected player.
+    let aggro = false;
+    const target = findAggroTarget(pr);
+    if (target) {
+      const adx = target.x - pr.x, ady = target.y - pr.y;
+      const adist = Math.hypot(adx, ady);
+      if (adist > 0.0001) {
+        pr.vx = adx / adist; pr.vy = ady / adist;
+        pr.nextTurnAt = now + 350; // keep re-aiming at the player while it's chasing
+        aggro = true;
+      }
+    }
+    if (!aggro && now >= (pr.nextTurnAt || 0)) {
       const angle = Math.random() * Math.PI * 2;
       pr.vx = Math.cos(angle); pr.vy = Math.sin(angle);
       pr.nextTurnAt = now + 800 + Math.random() * 1400;
     }
+    // Just got bitten — run away from whoever bit it for a bit instead of wandering
+    // or chasing (see resolveEat, which sets fleeUntil/vx/vy when a peck doesn't kill it).
+    const fleeing = !!(pr.fleeUntil && now < pr.fleeUntil);
+    const moveSpeed = pt.speed * (fleeing ? 15 : (aggro ? 6 : 1));
+
     const b = biomeBounds(pr.biome);
-    let nx = pr.x + pr.vx * pt.speed * dt;
-    let ny = pr.y + pr.vy * pt.speed * dt;
+    let nx = pr.x + pr.vx * moveSpeed * dt;
+    let ny = pr.y + pr.vy * moveSpeed * dt;
     if (nx < 0 || nx > MAP_W) { pr.vx *= -1; nx = Math.max(0, Math.min(MAP_W, nx)); }
     if (ny < b.yStart || ny > b.yEnd) { pr.vy *= -1; ny = Math.max(b.yStart, Math.min(b.yEnd, ny)); }
     pr.x = nx; pr.y = ny;
+
+    // Trees are solid — NPCs never enter a tree's zone, they bounce off it like a wall.
+    for (const tree of trees) {
+      const tdx = pr.x - tree.x, tdy = pr.y - tree.y;
+      const tdist = Math.hypot(tdx, tdy);
+      const minDist = tree.radius + pt.size;
+      if (tdist < minDist) {
+        const push = tdist > 0.0001 ? tdist : 0.0001;
+        const tnx = tdx / push, tny = tdy / push;
+        pr.x = tree.x + tnx * minDist;
+        pr.y = tree.y + tny * minDist;
+        pr.vx = tnx; pr.vy = tny;
+      }
+    }
+    // A player's body is solid too — a charging NPC stops right at contact, never overlapping.
+    for (const player of players.values()) {
+      if (player.flying) continue;
+      const pSpec = PVP_SPECIES[player.species] || PVP_SPECIES.sparrow;
+      const mdx = pr.x - player.x, mdy = pr.y - player.y;
+      const mdist = Math.hypot(mdx, mdy);
+      const minDistMe = pSpec.radius + pt.size;
+      if (mdist < minDistMe) {
+        const push = mdist > 0.0001 ? mdist : 0.0001;
+        pr.x = player.x + (mdx / push) * minDistMe;
+        pr.y = player.y + (mdy / push) * minDistMe;
+      }
+    }
+
     moved.push({ id: pr.id, x: pr.x, y: pr.y, vx: pr.vx, vy: pr.vy });
   }
   for (const f of food) {
     if (f.collected && now >= f.respawnAt) respawnFood(f);
+  }
+  for (const f of treeFruits) {
+    if (f.collected && now >= f.respawnAt) respawnTreeFruit(f);
   }
   // Broadcast on the very same tick the positions were computed on — this also
   // halves the old worst-case broadcast latency (100ms tick vs the previous
@@ -751,8 +935,10 @@ io.on('connection', (socket) => {
     for (const [id, pl] of players) state[id] = pl;
     socket.emit('state', state);
 
-    // ...and the authoritative food/prey world, so every client renders the same map.
-    socket.emit('worldState', { food, prey, eggs: ostrichEggs, flames: flamePatches });
+    // ...and the authoritative food/prey/tree world, so every client renders the same map.
+    // `trees` is the static layout (generated once at startup, never changes) — `treeFruits`
+    // is the per-slot fruit state on those trees (collected/respawning), same idea as food.
+    socket.emit('worldState', { food, prey, eggs: ostrichEggs, flames: flamePatches, trees, treeFruits });
 
     // ...and whatever season/day-night/time override is currently in effect for everyone.
     socket.emit('worldTime', worldTimeState());
@@ -823,10 +1009,24 @@ io.on('connection', (socket) => {
   socket.on('eatItem', (data) => {
     const player = players.get(socket.id);
     if (!player) return;
-    const kind = data && data.kind === 'prey' ? 'prey' : 'food';
     const id = data && typeof data.id === 'string' ? data.id : null;
     if (!id) return;
 
+    // Tree fruit lives in its own array/referee (resolveEatTreeFruit) since it respawns
+    // on its own tree rather than anywhere in the biome — everything else is unchanged.
+    if (data && data.kind === 'treeFruit') {
+      const result = resolveEatTreeFruit(player, id);
+      if (!result) return;
+      io.emit('treeFruitUpdate', result.item);
+      if (!result.partial) {
+        // Reported to the client as kind:'food' — its eatResult handler already knows
+        // how to score/heal/poison a 'food' result and fruit uses the same FOOD_TYPES table.
+        socket.emit('eatResult', { kind: 'food', id, type: result.type, points: result.points });
+      }
+      return;
+    }
+
+    const kind = data && data.kind === 'prey' ? 'prey' : 'food';
     const result = resolveEat(player, kind, id);
     if (!result) return;
 
