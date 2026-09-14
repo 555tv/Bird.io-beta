@@ -306,6 +306,9 @@
 
     <div id="updatesPanel" class="panel">
       <h4 data-i18n="updates_title">Обновления</h4>
+     <div class="upd"><div class="date">14.09</div><div class="text" data-i18n="update17">Спавн игроков теперь происходит в разных частях карты</div></div>
+     <div class="upd"><div class="date">11.09</div><div class="text" data-i18n="update16">После смерти игрок перерождается с 25% от набранных очков в предыдущий заход</div></div>
+     <div class="upd"><div class="date">10.09</div><div class="text" data-i18n="update15">Изменена механика полета птиц в ночное время. Пофикшен баг с проходом сквозь еду.</div></div>
      <div class="upd"><div class="date">08.09</div><div class="text" data-i18n="update14">Глобальное обновление: добавлен новый игровой концепт - деревья. Теперь фрукты ростут на деревьях. Чтобы попасть на дерево приземлитесь на него с полета. Изменен радиус обзора в ночное время. Изменен зум на начальных животных. Изменена механика обводки (теперь при нажатии ПКМ то, что вы можете есть мягко подсвечивает темно зеленым цветом, то что вы не можете есть не подсвечивает, а то что может вас есть/кусать подсвечивает агрессивным красным свечением. Добавленно агрессивное поведение для nps, которые могут вас атаковать, теперь они на вас нападают, а nps, которых вы можете атаковать теперь от вас убегают. Добавлено тело nps, теперь нельзя стоять над ними сверху.</div></div>
      <div class="upd"><div class="date">04.09</div><div class="text" data-i18n="update13">Пофикшен баг с едой, которая не давала опыта</div></div>
      <div class="upd"><div class="date">03.09</div><div class="text" data-i18n="update12">Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков</div></div>
@@ -453,7 +456,7 @@ const I18N = {
     ability_desc_stork:'Резкий рывок на 260px, наносит 550 урона всем на пути.',
     ability_desc_hawk:'Стремительный нырок на ближайшую добычу — атака с разгона.',
     ability_desc_pelican:'Водяной удар: наносит 4250 урона всем в радиусе 110px.',
-    ability_desc_owl:'Ночное зрение на 25с — снимает ночное затемнение и запрет на полёт ночью.',
+    ability_desc_owl:'Ночное зрение на 25с — снимает ночное затемнение и ограничение полёта ночью.',
     ability_desc_cassowary:'Разгон (×10 скорости) — повторный клик в течение 5с запускает удар ногами на 11000 урона.',
     ability_desc_phoenix:'Огненный след на 15с — оставляет горящие пятна (1000 урона/сек) во время полёта.',
     ability_desc_ostrich:'Откладывает яйцо (6500 HP) — приносит очки каждую секунду, пока его не съели.',
@@ -469,7 +472,7 @@ const I18N = {
     season_winter_desc:'Зерно, хлеб и яблоки исчезают — остаётся только мясо и добыча. Появляются костры (+25 HP, 25 очк). День короче — 11 мин, ночь длиннее — 14 мин.',
     season_coldwinter_desc:'Самый суровый сезон: вся обычная еда пропадает, мыши/хомяки/коты исчезают. Появляются аптечки (+20 HP). День всего 8 мин, ночь — 16 мин.',
     daynight_title:'День и ночь',
-    daynight_desc:'Ночью видимость падает — экран темнеет. Сова может активировать ночное зрение и летать без ограничений, остальным ночью летать нельзя.',
+    daynight_desc:'Ночью видимость падает — экран темнеет. Сова может активировать ночное зрение и летать без ограничений. Остальные ночью тоже могут летать (например, чтобы залезть на дерево), но полёт длится в 3 раза меньше и скорость полёта в 2 раза ниже.',
 
     mobile_tag:'(подвижн.)', points_suffix:'{n} очк.',
     medkit_label:'аптечка (лето/лютая зима)', medkit_pts:'без очков · +20 HP',
@@ -490,6 +493,9 @@ const I18N = {
     update13:'Пофикшен баг с едой, которая не давала опыта',
     update12:'Глобальное обновление игры: основная логика игры перенесена на сервер, дабы избежать локальной обрисовке игры и помочь синхронизировать ресурс карты у всех игроков',
     update14:'Глобальное обновление: добавлен новый игровой концепт - деревья. Теперь фрукты ростут на деревьях. Чтобы попасть на дерево приземлитесь на него с полета. Изменен радиус обзора в ночное время. Изменен зум на начальных животных. Изменена механика обводки (теперь при нажатии ПКМ то, что вы можете есть мягко подсвечивает темно зеленым цветом, то что вы не можете есть не подсвечивает, а то что может вас есть/кусать подсвечивает агрессивным красным свечением. Добавленно агрессивное поведение для nps, которые могут вас атаковать, теперь они на вас нападают, а nps, которых вы можете атаковать теперь от вас убегают. Добавлено тело nps, теперь нельзя стоять над ними сверху.',
+    update15:'Изменена механика полета птиц в ночное время. Пофикшен баг с проходом сквозь еду.',
+    update16:'После смерти игрок перерождается с 25% от набранных очков в предыдущий заход',
+    update17:'Спавн игроков теперь происходит в разных частях карты',
     support_title_attr:'Поддержать проект',
     howtoplay_btn:'Как играть',
     game_over_label:'Игра окончена — счёт:',
@@ -568,7 +574,7 @@ const I18N = {
     death_toast:'ТЫ БЫЛ СЪЕДЕН — ты снова воробей',
     grabbed_by_eagle:'Тебя схватил орёл!',
     dropped_by_eagle:'Орёл сбросил тебя с высоты!',
-    night_fly_danger:'Ночью летать опасно',
+    night_fly_danger:'В ночное время полёт ограничен',
     egg_eaten:'Съедено яйцо страуса! +5000000 очков',
 
     max_stage_phoenix:'максимальная стадия — Феникс',
@@ -620,7 +626,7 @@ const I18N = {
     ability_desc_stork:'A sharp 260px dash that deals 550 damage to everything in its path.',
     ability_desc_hawk:'A swift dive onto the nearest prey — a running-start attack.',
     ability_desc_pelican:'Water strike: deals 4250 damage to everything within a 110px radius.',
-    ability_desc_owl:'Night vision for 25s — removes the night darkening and the no-fly-at-night restriction.',
+    ability_desc_owl:'Night vision for 25s — removes the night darkening and the night flight limits.',
     ability_desc_cassowary:'Charges up (×10 speed) — clicking again within 5s unleashes a kick for 11000 damage.',
     ability_desc_phoenix:'Fire trail for 15s — leaves burning patches (1000 dmg/sec) while flying.',
     ability_desc_ostrich:"Lays an egg (6500 HP) — earns points every second until it's eaten.",
@@ -636,7 +642,7 @@ const I18N = {
     season_winter_desc:'Seed, bread and apples disappear — only meat and prey remain. Bonfires appear (+25 HP, 25 pts). Day is shorter — 11 min, night longer — 14 min.',
     season_coldwinter_desc:'The harshest season: all regular food disappears, mice/hamsters/cats vanish. First-aid kits appear (+20 HP). Day is only 8 min, night 16 min.',
     daynight_title:'Day and Night',
-    daynight_desc:"Visibility drops at night — the screen darkens. The Owl can activate night vision and fly without restriction; everyone else can't fly at night.",
+    daynight_desc:"Visibility drops at night — the screen darkens. The Owl can activate night vision and fly without restriction. Everyone else can still fly at night (e.g. to land on a tree), but flight lasts 3x less time and at half the speed.",
 
     mobile_tag:'(mobile)', points_suffix:'{n} pts',
     medkit_label:'first-aid kit (summer/harsh winter)', medkit_pts:'no points · +20 HP',
@@ -657,6 +663,9 @@ const I18N = {
     update13:'Fixed a bug where eating food did not grant XP',
     update12:'Global game update: core game logic moved to the server to avoid local rendering discrepancies and help synchronize map resources across all players',
     update14:'Global update: added a new gameplay concept - trees. Fruit now grows on trees. To land on a tree, fly onto it and touch down. Changed the night-time vision radius. Adjusted the camera zoom for starting animals. Reworked the highlight mechanic (now holding RMB softly highlights what you can eat in dark green, does not highlight what you cannot eat, and highlights what can eat/bite you with an aggressive red glow). Added aggressive behavior for NPCs that can attack you - they now attack you, while NPCs you can attack now flee from you. Added NPC corpses - you can no longer stand on top of them.',
+    update15:'Changed night-time bird flight mechanics. Fixed a bug that let players walk through food.',
+    update16:'After death, players now respawn with 25% of the score earned in their previous run.',
+    update17:'Player spawn now happens in different parts of the map.',
     support_title_attr:'Support the project',
     howtoplay_btn:'How to Play',
     game_over_label:'Game over — score:',
@@ -735,7 +744,7 @@ const I18N = {
     death_toast:"YOU WERE EATEN — you're a sparrow again",
     grabbed_by_eagle:'An eagle grabbed you!',
     dropped_by_eagle:'The eagle dropped you from above!',
-    night_fly_danger:"It's dangerous to fly at night",
+    night_fly_danger:'Night flight is restricted',
     egg_eaten:'Ostrich egg eaten! +5,000,000 points',
 
     max_stage_phoenix:'max stage — Phoenix',
@@ -893,19 +902,19 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   // duration = max continuous flight time in ms, speedMult = ground-speed multiplier while airborne.
   // Ostrich & cassowary have duration 0 => can't fly at all.
   const FLIGHT_STATS = {
-    sparrow:    { duration:3000,   speedMult:3.5  },
-    pigeon:     { duration:5000,   speedMult:3.5  },
-    crow:       { duration:7000,   speedMult:3.5  },
-    stork:      { duration:10000,  speedMult:3.5  },
-    owl:        { duration:13000,  speedMult:5    },
-    hawk:       { duration:17000,  speedMult:5    },
-    pelican:    { duration:21000,  speedMult:5    },
-    eagle:      { duration:24000,  speedMult:7.5  },
-    griffin:    { duration:30000,  speedMult:7.5  },
-    blackgoose: { duration:75000,  speedMult:11.75},
+    sparrow:    { duration:3500,   speedMult:3  },
+    pigeon:     { duration:5500,   speedMult:4.25  },
+    crow:       { duration:6500,   speedMult:5  },
+    stork:      { duration:10000,  speedMult:5.75  },
+    owl:        { duration:11500,  speedMult:6.45    },
+    hawk:       { duration:14500,  speedMult:7.5    },
+    pelican:    { duration:15000,  speedMult:7.75    },
+    eagle:      { duration:16500,  speedMult:8.5  },
+    griffin:    { duration:17500,  speedMult:9.1  },
+    blackgoose: { duration:20000,  speedMult:9.5},
     ostrich:    { duration:0,      speedMult:1    },
     cassowary:  { duration:0,      speedMult:1    },
-    phoenix:    { duration:110000, speedMult:14   },
+    phoenix:    { duration:60000, speedMult:11.25   },
   };
   function canFly(speciesKey){ return (FLIGHT_STATS[speciesKey]||{}).duration > 0; }
   function flightDurationOf(speciesKey){ return (FLIGHT_STATS[speciesKey]||{}).duration || 0; }
@@ -1713,6 +1722,20 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   let loopStarted = false;
   function startGame(){
     me = freshPlayer(nameInput.value.trim().slice(0,14));
+    // The 25% death-score carryover now lives on the server, keyed by name (see
+    // socket.on('joinAck', ...) below), so it follows the player across devices/browsers
+    // instead of being stuck in one browser's storage. If the socket never connects at
+    // all (solo/offline mode), fall back to the old localStorage copy so the feature
+    // still works offline.
+    if(typeof io === 'undefined'){
+      try{
+        const carried = parseInt(localStorage.getItem(CARRYOVER_SCORE_KEY), 10);
+        if(carried > 0){
+          me.totalScore += carried;
+          localStorage.removeItem(CARRYOVER_SCORE_KEY);
+        }
+      }catch(e){}
+    }
     selectScreen.style.display='none';
     deathScoreBox.style.display='none';
     hudSelf.style.display='block';
@@ -1726,8 +1749,8 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     hudName.textContent = me.name;
     hint.style.opacity='1';
     setTimeout(()=>{ hint.style.opacity='0'; }, 7000);
-    if(!socketConnected){ startNetworking(); }
-    else { socket.emit('join', currentSnapshot()); }
+    if(!socketConnected){ pendingFreshSpawn = true; startNetworking(); }
+    else { pendingFreshSpawn = true; sendJoin(); }
     if(!loopStarted){ loopStarted = true; requestAnimationFrame(loop); }
   }
 
@@ -1755,6 +1778,11 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
   let otherPlayers = new Map(); // socket id -> {name,species,x,y,hp,maxHp,totalScore,angle,flying}
   let socket = null;
   let socketConnected = false;
+  // True only for the 'join' that starts a brand-new game (set in startGame(), consumed
+  // by sendJoin() below) — tells the server it's OK to pick a fresh random spawn point.
+  // Stays false for a 'join' fired by an automatic reconnect mid-game, so a network blip
+  // can't randomly teleport a player who's still alive and playing.
+  let pendingFreshSpawn = false;
   // Once true, food/prey/collection state comes from the server (Phase 2 of the
   // "shared world" migration) and all local spawn/respawn/collect logic below is
   // skipped in favor of sending 'eatItem' requests and applying server broadcasts.
@@ -1855,6 +1883,15 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     socket.emit('update', currentSnapshot());
   }
 
+  // Sends 'join', tagging it with whether this is a brand-new game (see pendingFreshSpawn
+  // above) so the server knows whether it's allowed to pick a fresh random spawn point.
+  function sendJoin(){
+    const payload = currentSnapshot();
+    payload.isNewSpawn = pendingFreshSpawn;
+    pendingFreshSpawn = false;
+    socket.emit('join', payload);
+  }
+
   function startNetworking(){
     if(typeof io === 'undefined'){
       // socket.io client script failed to load (e.g. server not running) — fall back to solo mode
@@ -1866,13 +1903,28 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     socket = io({ transports: ['websocket'] }); // connects back to the same origin that served this page
     socket.on('connect', ()=>{
       socketConnected = true;
-      socket.emit('join', currentSnapshot());
+      sendJoin();
       updateConnText();
     });
     socket.on('disconnect', ()=>{
       socketConnected = false;
       otherPlayers.clear();
       updateConnText();
+    });
+    // Server's authoritative reply to our 'join': our real starting score, including
+    // any death-score carryover it applied for this name, and our starting position in
+    // case the server's own food-collision check had to nudge it off a food item.
+    socket.on('joinAck', (ack)=>{
+      if(!me || !ack) return;
+      if(Number.isFinite(ack.totalScore)) me.totalScore = ack.totalScore;
+      if(Number.isFinite(ack.x) && Number.isFinite(ack.y)){ me.x = ack.x; me.y = ack.y; }
+    });
+    // The server re-checks food collision on every 'update' too (so a modified client
+    // can't just skip its own local check) — if it had to correct our position, snap to it.
+    socket.on('posCorrect', (pos)=>{
+      if(!me || !pos) return;
+      if(Number.isFinite(pos.x)) me.x = pos.x;
+      if(Number.isFinite(pos.y)) me.y = pos.y;
     });
     // full snapshot of everyone already in the world, sent right after we join
     socket.on('state', (state)=>{
@@ -2305,7 +2357,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     if(me.flying) return;
     if(me.digging) return; // pigeon can't take off mid-dig
     if(me.flightFuel <= 0) return;
-    if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){ showAbilityToast(t('night_fly_danger')); return; }
+    if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){ showAbilityToast(t('night_fly_danger')); }
     me.flying = true;
     if(me.landedOnTreeId){
       showAbilityToast('✈️ Взлетела с дерева!');
@@ -2761,9 +2813,20 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
     showEvo(s.name);
   }
 
+  // Fraction of the final score carried over into the *next* game after death.
+  const DEATH_SCORE_CARRYOVER_RATIO = 0.25;
+  const CARRYOVER_SCORE_KEY = 'birdio_carryover_score';
+
   let pendingMenuReturn = false;
   function die(){
     const keepTotal = me.totalScore;
+    // Tell the server to stash 25% of this run's score under our name — it'll be applied
+    // automatically on our next 'join' (see socket.on('joinAck', ...) above), from any
+    // device/browser. Also keep a local copy as an offline fallback (see startGame()).
+    if(socketConnected){ socket.emit('died', { totalScore: keepTotal }); }
+    try{
+      localStorage.setItem(CARRYOVER_SCORE_KEY, String(Math.floor(keepTotal * DEATH_SCORE_CARRYOVER_RATIO)));
+    }catch(e){}
     releaseCarriedPrey(false);
     // Reset the local player object to a safe, valid state so any code still running later
     // in this same frame (after this die() call returns) doesn't touch a null player.
@@ -2871,14 +2934,13 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
 
     // ---- Flight fuel: drains while airborne, recharges while grounded ----
     if(!canFly(me.species)) me.flying = false;
-    if(me.flying && dayNightInfo.phase==='night' && !owlNightVisionActive(me) && !me._beingCarriedByEagle){
-      me.flying = false; // forced landing — night fell mid-flight
-      showAbilityToast(t('night_fly_danger'));
-    }
+    // At night, flight isn't forbidden anymore (e.g. still needed to land on trees) — it's just
+    // limited: fuel drains 3x faster (~3x less airtime) and ground speed while flying is halved.
+    const nightFlightRestricted = dayNightInfo.phase==='night' && !owlNightVisionActive(me) && !me._beingCarriedByEagle;
     if(me._beingCarriedByEagle){
       // fuel neither drains nor recharges while being carried — it's the eagle doing the flying
     } else if(me.flying){
-      me.flightFuel -= dt*1000;
+      me.flightFuel -= dt*1000*(nightFlightRestricted ? 3 : 1);
       if(me.flightFuel <= 0){
         me.flightFuel = 0;
         me.flying = false; // forced landing — out of fuel
@@ -2889,7 +2951,7 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
         me.flightFuel = Math.min(maxFuel, me.flightFuel + dt*1000*FLIGHT_RECHARGE_RATE);
       }
     }
-    const flightMult = me.flying ? flightSpeedMultOf(me.species) : 1;
+    const flightMult = me.flying ? flightSpeedMultOf(me.species) * (nightFlightRestricted ? 0.5 : 1) : 1;
     const chargeMult = me.cassowaryCharging ? CASSOWARY_CHARGE_SPEED_MULT : 1;
 
     // ---- Pigeon dig ability: finishes after its duration, spawning bread around the player ----
@@ -3016,6 +3078,37 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
           const push = pdist > 0.0001 ? pdist : 0.0001;
           me.x = pr.x + (pdx/push)*minDist;
           me.y = pr.y + (pdy/push)*minDist;
+        }
+      }
+    }
+
+    // ---- Food is solid too: grounded birds can't walk through a food item's body, only
+    // touch its edge (same idea as the tree/NPC collision above).
+    if(!me.flying && !me._beingCarriedByEagle){
+      for(const f of food){
+        if(f.collected || f._predictedHidden) continue;
+        const ft = FOOD_TYPES[f.type];
+        if(!ft) continue;
+        const fdx = me.x - f.x, fdy = me.y - f.y;
+        const fdist = Math.hypot(fdx, fdy);
+        const minDist = ft.size + me.radius;
+        if(fdist < minDist){
+          const push = fdist > 0.0001 ? fdist : 0.0001;
+          me.x = f.x + (fdx/push)*minDist;
+          me.y = f.y + (fdy/push)*minDist;
+        }
+      }
+      for(const f of tropicalFood){
+        if(f.collected || f._predictedHidden) continue;
+        const ft = FOOD_TYPES[f.type];
+        if(!ft) continue;
+        const fdx = me.x - f.x, fdy = me.y - f.y;
+        const fdist = Math.hypot(fdx, fdy);
+        const minDist = ft.size + me.radius;
+        if(fdist < minDist){
+          const push = fdist > 0.0001 ? fdist : 0.0001;
+          me.x = f.x + (fdx/push)*minDist;
+          me.y = f.y + (fdy/push)*minDist;
         }
       }
     }
@@ -3696,13 +3789,17 @@ FIRSTAID_IMG.src = FIRSTAID_IMAGE;
       flyBtn.classList.add('disabled');
       flyBtn.classList.remove('active');
     } else if(dayNightInfo.phase==='night' && !owlNightVisionActive(me)){
+      // Night flight is still allowed (just limited: 3x less airtime, half speed) — the bar
+      // stays usable, it's just tinted to signal the restriction instead of being disabled.
       const maxFuel = flightDurationOf(me.species);
       const pct = maxFuel>0 ? Math.round((me.flightFuel/maxFuel)*100) : 0;
       flightBarInner.style.width = pct+'%';
-      flightBarInner.style.background = 'rgba(255,255,255,0.15)';
-      flightLabel.textContent = t('night_fly_danger');
-      flyBtn.classList.add('disabled');
-      flyBtn.classList.remove('active');
+      flightBarInner.style.background = me.flying ? 'linear-gradient(90deg, #6B7A99, #A9BFE0)' : 'linear-gradient(90deg, #4A5A78, #8695B8)';
+      flightLabel.textContent = me.flying
+        ? `${t('night_fly_danger')} · ${t('flying_time',{s:(me.flightFuel/1000).toFixed(1)})}`
+        : `${t('night_fly_danger')} · ${t('flight_ready',{cur:(me.flightFuel/1000).toFixed(1), max:(maxFuel/1000).toFixed(0)})}`;
+      flyBtn.classList.remove('disabled');
+      flyBtn.classList.toggle('active', me.flying);
     } else {
       const maxFuel = flightDurationOf(me.species);
       const pct = maxFuel>0 ? Math.round((me.flightFuel/maxFuel)*100) : 0;

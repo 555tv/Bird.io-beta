@@ -45,6 +45,15 @@ const players = new Map();
 const lastBroadcastAt = new Map();
 const UPDATE_BROADCAST_MIN_INTERVAL_MS = 40; // caps fan-out at 25/s per player, well above any normal client's send rate
 
+// ---------------- Death score carryover (server-authoritative) ----------------
+// A player keeps 25% of their score into their *next* game after dying. This used to
+// live in the browser's localStorage (so it was tied to one device/browser); now the
+// server is the source of truth, keyed by player name, so it follows the player to any
+// device/browser. Entries are consumed (deleted) the moment they're applied on 'join',
+// so a name can't collect more than one pending bonus at a time.
+const DEATH_SCORE_CARRYOVER_RATIO = 0.25;
+const carryoverScores = new Map(); // player name -> points to add on that name's next join
+
 function sanitize(d) {
   d = d || {};
   return {
@@ -165,6 +174,12 @@ const BIOME_MAIN = { yStart: 0, yEnd: 19200 };
 const BIOME_TROPICAL = { yStart: 19200, yEnd: 28800 };
 function biomeBounds(name) { return name === 'tropical' ? BIOME_TROPICAL : BIOME_MAIN; }
 function biomeAtY(y) { return (y >= BIOME_TROPICAL.yStart && y < BIOME_TROPICAL.yEnd) ? 'tropical' : 'main'; }
+// A fresh sparrow always starts in the main biome — but anywhere in it, spread across the
+// whole map, instead of clustered near one fixed point, so death-into-restart lands
+// somewhere different each time.
+function randomSpawnPoint() {
+  return { x: Math.random() * MAP_W, y: BIOME_MAIN.yStart + Math.random() * (BIOME_MAIN.yEnd - BIOME_MAIN.yStart) };
+}
 
 // Mirrors the client's FOOD_TYPES (size for eat-distance checks, points for
 // score/respawn timing, maxHp for the "tough plants must be pecked down" mechanic).
@@ -237,6 +252,30 @@ function canEat(species, type) {
 let food = [];
 let prey = [];
 let foodSeq = 0, preySeq = 0;
+
+// ---------------- Food collision (server-authoritative) ----------------
+// A grounded bird can't walk through a food item's body — same rule the client already
+// enforces for itself locally, now also re-applied here so it's true for *everyone*,
+// including a modified client that skips the check on its own end: whatever position it
+// reports gets corrected before it's stored/broadcast, so nobody else ever sees it
+// standing inside a piece of food.
+function applyFoodCollision(p) {
+  if (!p || p.flying) return;
+  const spec = PVP_SPECIES[p.species] || PVP_SPECIES.sparrow;
+  for (const f of food) {
+    if (f.collected) continue;
+    const ft = FOOD_TYPES[f.type];
+    if (!ft) continue;
+    const dx = p.x - f.x, dy = p.y - f.y;
+    const dist = Math.hypot(dx, dy);
+    const minDist = ft.size + spec.radius;
+    if (dist < minDist) {
+      const push = dist > 0.0001 ? dist : 0.0001;
+      p.x = f.x + (dx / push) * minDist;
+      p.y = f.y + (dy / push) * minDist;
+    }
+  }
+}
 
 function spawnFoodItem(type, biome) {
   const b = biomeBounds(biome);
@@ -928,12 +967,38 @@ io.on('connection', (socket) => {
 
   socket.on('join', (data) => {
     const p = sanitize(data);
+
+    // A brand-new game (client sets isNewSpawn — see sendJoin() client-side) gets a fresh
+    // random spot on the map instead of whatever x/y the client happened to send, so every
+    // death-and-restart lands somewhere different. A 'join' fired by an automatic
+    // reconnect mid-game (isNewSpawn absent/false) keeps the client's reported position
+    // so a network blip doesn't teleport a player who's still alive and playing.
+    if (data && data.isNewSpawn) {
+      const spawn = randomSpawnPoint();
+      p.x = spawn.x;
+      p.y = spawn.y;
+    }
+    applyFoodCollision(p);
+
+    // Apply this name's pending death-score carryover, if any, and consume it —
+    // server-authoritative so it follows the player rather than living in one browser.
+    const carryover = carryoverScores.get(p.name) || 0;
+    if (carryover > 0) {
+      p.totalScore += carryover;
+      carryoverScores.delete(p.name);
+    }
+
     players.set(socket.id, p);
 
     // Give the newcomer a snapshot of everyone already in the world.
     const state = {};
     for (const [id, pl] of players) state[id] = pl;
     socket.emit('state', state);
+
+    // Tell the joining client its authoritative starting score (including any
+    // carryover just applied above) and position (including any food-collision
+    // correction just applied above) so its local player object matches the server.
+    socket.emit('joinAck', { totalScore: p.totalScore, carryover, x: p.x, y: p.y });
 
     // ...and the authoritative food/prey/tree world, so every client renders the same map.
     // `trees` is the static layout (generated once at startup, never changes) — `treeFruits`
@@ -947,6 +1012,18 @@ io.on('connection', (socket) => {
     socket.broadcast.emit('playerUpdate', { id: socket.id, ...p });
   });
 
+  // A player reporting its own death: stash 25% of its final score under its name so
+  // the *next* join with that same name (from any device/browser) starts with a head
+  // start. Score itself stays client-trusted here, same as the rest of PvE scoring.
+  socket.on('died', (data) => {
+    const player = players.get(socket.id);
+    if (!player) return;
+    const score = Number.isFinite(data && data.totalScore) ? data.totalScore : player.totalScore;
+    const amount = Math.floor(Math.max(0, score) * DEATH_SCORE_CARRYOVER_RATIO);
+    if (amount > 0) carryoverScores.set(player.name, amount);
+    else carryoverScores.delete(player.name);
+  });
+
   // Caps how often we FAN OUT a given player's movement to everyone else — not how
   // often we accept it. `players.set()` below always runs at full rate so distance
   // checks elsewhere (eating, PvP, abilities) stay accurate; only the O(n) broadcast
@@ -955,7 +1032,15 @@ io.on('connection', (socket) => {
   socket.on('update', (data) => {
     if (!players.has(socket.id)) return; // must join first
     const p = sanitize(data);
+    const preX = p.x, preY = p.y;
+    applyFoodCollision(p);
     players.set(socket.id, p);
+    // If our own collision check moved this player (e.g. a client that skipped/cheated
+    // its local check tried to walk through food), tell just that client its corrected
+    // position so it snaps back in sync with what everyone else now sees.
+    if (Math.abs(p.x - preX) > 0.01 || Math.abs(p.y - preY) > 0.01) {
+      socket.emit('posCorrect', { x: p.x, y: p.y });
+    }
     const now = Date.now();
     if (now - (lastBroadcastAt.get(socket.id) || 0) < UPDATE_BROADCAST_MIN_INTERVAL_MS) return;
     lastBroadcastAt.set(socket.id, now);
